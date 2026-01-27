@@ -1,26 +1,25 @@
 import { Queue } from "bullmq";
 import IORedis from "ioredis";
 import { env } from "./env";
+import { createRedisConnection } from "./redisConnection";
 
 let redis: IORedis | null = null;
 let ingestQueue: Queue | null = null;
 let computeQueue: Queue | null = null;
 
-// Initialize Redis – connect directly and let ioredis handle retries
+// Initialize Redis
 (async () => {
   try {
-    const useTls = env.REDIS_URL.startsWith("rediss://");
-    redis = new IORedis(env.REDIS_URL, {
-      maxRetriesPerRequest: null,
-      ...(useTls ? { tls: {} } : {}),
-      lazyConnect: true,
-    });
+    redis = createRedisConnection(env.REDIS_URL);
 
     redis.on("error", () => {
       // Suppress repeated connection errors in the log
     });
 
-    await redis.connect();
+    await new Promise<void>((resolve, reject) => {
+      redis!.once("ready", resolve);
+      redis!.once("error", reject);
+    });
 
     ingestQueue = new Queue("ingest", { connection: redis as any });
     computeQueue = new Queue("compute", { connection: redis as any });

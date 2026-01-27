@@ -1,6 +1,6 @@
 import { Worker, Queue } from "bullmq";
-import IORedis from "ioredis";
 import { env } from "./env";
+import { createRedisConnection } from "./redisConnection";
 import { type IngestJob, type ComputeJob } from "./queue";
 import { ingestGameAccount, ingestUserAll } from "./services/ingest/ingestOrchestrator";
 import { prisma } from "./prisma";
@@ -75,11 +75,7 @@ async function runWeeklyArcEndingSoon() {
 async function main() {
   console.log("Worker starting...");
 
-  const useTls = env.REDIS_URL.startsWith("rediss://");
-  const redis = new IORedis(env.REDIS_URL, {
-    maxRetriesPerRequest: null,
-    ...(useTls ? { tls: {} } : {}),
-  });
+  const redis = createRedisConnection(env.REDIS_URL);
 
   await new Promise<void>((resolve, reject) => {
     redis.once("ready", resolve);
