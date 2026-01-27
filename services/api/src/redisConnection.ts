@@ -15,5 +15,6 @@ export function createRedisConnection(url: string): IORedis {
     password: parsed.password ? decodeURIComponent(parsed.password) : undefined,
     tls: useTls ? { rejectUnauthorized: false } : undefined,
     maxRetriesPerRequest: null,
+    family: 4, // Force IPv4 — Upstash IPv6 causes ECONNRESET on some hosts
   });
 }
