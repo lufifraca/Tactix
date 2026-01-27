@@ -25,9 +25,10 @@ ENV API_PORT=10000
 
 EXPOSE 10000
 
+WORKDIR /app/services/api
+
 # Migrate DB, then start API + worker
 CMD sh -c '\
-  cd services/api && \
   npx prisma migrate deploy && \
   node --import @swc-node/register/esm-register src/worker.ts & \
   node --import @swc-node/register/esm-register src/index.ts'
