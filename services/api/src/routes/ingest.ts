@@ -40,7 +40,15 @@ export async function ingestRoutes(app: FastifyInstance) {
     const checks: any[] = [];
 
     // Check env keys
-    checks.push({ type: "env", STEAM_WEB_API_KEY: !!env.STEAM_WEB_API_KEY, MARVEL_RIVALS_API_KEY: !!env.MARVEL_RIVALS_API_KEY, HENRIK_API_KEY: !!env.HENRIK_API_KEY, TRN_API_KEY: !!env.TRN_API_KEY });
+    checks.push({
+      type: "env",
+      STEAM_WEB_API_KEY: !!env.STEAM_WEB_API_KEY,
+      MARVEL_RIVALS_API_KEY: !!env.MARVEL_RIVALS_API_KEY,
+      HENRIK_API_KEY: !!env.HENRIK_API_KEY,
+      TRN_API_KEY: !!env.TRN_API_KEY,
+      S3_CONFIGURED: !!(env.S3_ENDPOINT && env.S3_ACCESS_KEY_ID && env.S3_SECRET_ACCESS_KEY),
+      S3_ENDPOINT: env.S3_ENDPOINT ? env.S3_ENDPOINT.replace(/\/\/.*@/, "//***@") : "(not set)",
+    });
 
     for (const a of accounts) {
       const diag: any = { game: a.game, provider: a.provider, externalId: a.externalId, displayName: a.displayName };

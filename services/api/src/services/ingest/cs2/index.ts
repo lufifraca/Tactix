@@ -30,8 +30,13 @@ export async function ingestCs2Account(account: GameAccount): Promise<{ inserted
   }
   const rawJson = JSON.stringify(payload);
 
-  const rawKey = `raw/cs2/steam/${account.userId}/${Date.now()}_${sha256Hex(rawJson).slice(0, 10)}.json`;
-  await putObject({ key: rawKey, body: rawJson, contentType: "application/json", cacheControl: "private, max-age=0" });
+  let rawKey: string | null = `raw/cs2/steam/${account.userId}/${Date.now()}_${sha256Hex(rawJson).slice(0, 10)}.json`;
+  try {
+    await putObject({ key: rawKey, body: rawJson, contentType: "application/json", cacheControl: "private, max-age=0" });
+  } catch (s3Err) {
+    console.warn("[CS2] S3 raw payload upload failed (non-blocking):", extractErrorMessage(s3Err as any));
+    rawKey = null;
+  }
 
   const cumMap = statsArrayToMap(payload.playerstats?.stats);
   const canonicalCum = mapCs2CumulativeToCanonical(cumMap);
@@ -74,8 +79,8 @@ export async function ingestCs2Account(account: GameAccount): Promise<{ inserted
         mode: "UNKNOWN",
         result: "UNKNOWN",
         normalizedStats: delta as any,
-        rawPayloadS3Key: rawKey,
-        rawPayloadSha256: sha256Hex(rawJson),
+        rawPayloadS3Key: rawKey ?? undefined,
+        rawPayloadSha256: rawKey ? sha256Hex(rawJson) : undefined,
         source: "STEAM",
       },
     });

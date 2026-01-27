@@ -44,9 +44,13 @@ export async function ingestMarvelRivalsAccount(account: GameAccount): Promise<{
       const trnBody = JSON.stringify(trn);
       const trnSha = sha256Hex(trnBody);
       const trnKey = `raw/marvel_rivals/trn/${account.userId}/${Date.now()}_${trnSha.slice(0, 10)}.json`;
-      await putObject({ key: trnKey, body: trnBody, contentType: "application/json", cacheControl: "private, max-age=0" });
-      rawPayloadS3Key = trnKey;
-      rawPayloadSha256 = trnSha;
+      try {
+        await putObject({ key: trnKey, body: trnBody, contentType: "application/json", cacheControl: "private, max-age=0" });
+        rawPayloadS3Key = trnKey;
+        rawPayloadSha256 = trnSha;
+      } catch (s3Err) {
+        console.warn("[Marvel Rivals] S3 TRN payload upload failed (non-blocking):", extractErrorMessage(s3Err as any));
+      }
       sourceUsed = "TRACKER_NETWORK";
 
       // Try to locate matches in a few common places.
@@ -70,9 +74,13 @@ export async function ingestMarvelRivalsAccount(account: GameAccount): Promise<{
     const body = JSON.stringify(mh);
     const sha = sha256Hex(body);
     const rawKey = `raw/marvel_rivals/community/${account.userId}/${Date.now()}_${sha.slice(0, 10)}.json`;
-    await putObject({ key: rawKey, body, contentType: "application/json", cacheControl: "private, max-age=0" });
-    rawPayloadS3Key = rawKey;
-    rawPayloadSha256 = sha;
+    try {
+      await putObject({ key: rawKey, body, contentType: "application/json", cacheControl: "private, max-age=0" });
+      rawPayloadS3Key = rawKey;
+      rawPayloadSha256 = sha;
+    } catch (s3Err) {
+      console.warn("[Marvel Rivals] S3 raw payload upload failed (non-blocking):", extractErrorMessage(s3Err as any));
+    }
   }
 
   let inserted = 0;

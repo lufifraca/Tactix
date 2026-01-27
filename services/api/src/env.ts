@@ -72,4 +72,6 @@ console.log("ENV CHECK steam key present:", Boolean(process.env.STEAM_WEB_API_KE
 console.log("ENV CHECK riot key present:", Boolean(process.env.RIOT_API_KEY));
 console.log("ENV CHECK henrik key present:", Boolean(process.env.HENRIK_API_KEY));
 console.log("ENV CHECK marvel rivals key present:", Boolean(process.env.MARVEL_RIVALS_API_KEY));
+console.log("ENV CHECK S3_ENDPOINT:", process.env.S3_ENDPOINT ?? "(not set)");
+console.log("ENV CHECK S3 configured:", Boolean(process.env.S3_ENDPOINT && process.env.S3_ACCESS_KEY_ID && process.env.S3_SECRET_ACCESS_KEY));
 
