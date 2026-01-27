@@ -3,6 +3,7 @@ import { z } from "zod";
 import { requireUser, type AuthedRequest } from "../auth/middleware";
 import { safeEnqueueIngest, type IngestJob } from "../queue";
 import { ingestUserAll, ingestGameAccount } from "../services/ingest/ingestOrchestrator";
+import { extractErrorMessage } from "../utils/http";
 import { prisma } from "../prisma";
 
 export async function ingestRoutes(app: FastifyInstance) {
@@ -74,7 +75,7 @@ export async function ingestRoutes(app: FastifyInstance) {
         }
       } catch (e: any) {
         diag.status = "error";
-        diag.detail = e.message?.slice(0, 500) ?? "Unknown error";
+        diag.detail = extractErrorMessage(e).slice(0, 500);
       }
 
       checks.push(diag);
@@ -101,7 +102,7 @@ export async function ingestRoutes(app: FastifyInstance) {
         entry.result = result;
       } catch (e: any) {
         entry.status = "error";
-        entry.error = e?.message || (typeof e === "string" ? e : "Unknown error");
+        entry.error = extractErrorMessage(e);
         entry.stack = e?.stack?.split("\n").slice(0, 5) ?? [];
       }
       results.push(entry);

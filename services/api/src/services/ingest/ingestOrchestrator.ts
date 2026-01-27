@@ -1,4 +1,5 @@
 import { prisma } from "../../prisma";
+import { extractErrorMessage } from "../../utils/http";
 import { ingestCs2Account } from "./cs2/index.js";
 import { ingestMarvelRivalsAccount } from "./marvelRivals/index.js";
 
@@ -75,7 +76,7 @@ export async function ingestUserAll(userId: string) {
     try {
       results.push(await ingestGameAccount(a.id));
     } catch (err: any) {
-      const errorMsg = err?.message || (typeof err === "string" ? err : "Unknown ingest error");
+      const errorMsg = extractErrorMessage(err);
       console.error(`[Ingest] Error ingesting account ${a.id} (${a.game}):`, errorMsg, err?.stack ?? err);
       results.push({ ok: false, error: errorMsg, game: a.game });
     }

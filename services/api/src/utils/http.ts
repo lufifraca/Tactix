@@ -1,3 +1,26 @@
+/**
+ * Extract a meaningful error message from any error type.
+ * Handles AggregateError (empty .message, errors in .errors array),
+ * plain strings, and standard Error objects.
+ */
+export function extractErrorMessage(err: unknown): string {
+  if (!err) return "Unknown error";
+  if (typeof err === "string") return err;
+
+  const e = err as any;
+
+  // AggregateError (e.g. ECONNREFUSED from Node.js fetch) has empty .message
+  // but useful info in .errors array and .code
+  if (e.name === "AggregateError" || e.constructor?.name === "AggregateError") {
+    const code = e.code ?? e.errors?.[0]?.code ?? "";
+    const inner = e.errors?.[0]?.message ?? "";
+    return `${e.name}: ${code}${inner ? ` (${inner})` : ""}`.trim() || "Connection error";
+  }
+
+  if (e.message) return e.message;
+  return String(err);
+}
+
 export async function fetchJson<T>(
   url: string,
   init: RequestInit & { timeoutMs?: number } = {}

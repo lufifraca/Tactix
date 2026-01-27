@@ -1,3 +1,10 @@
+import dns from "node:dns";
+
+// Force IPv4-first DNS resolution – Render's infrastructure sometimes refuses
+// IPv6 connections to external APIs (Steam, MarvelRivalsAPI, etc.), causing
+// AggregateError [ECONNREFUSED]. This mirrors the earlier Redis IPv4 fix.
+dns.setDefaultResultOrder("ipv4first");
+
 import Fastify from "fastify";
 import cors from "@fastify/cors";
 import cookie from "@fastify/cookie";

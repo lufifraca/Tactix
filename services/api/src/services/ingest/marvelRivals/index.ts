@@ -2,6 +2,7 @@ import type { GameAccount } from "@prisma/client";
 import { type GameProvider } from "../../../constants";
 import { prisma } from "../../../prisma";
 import { putObject } from "../../storage";
+import { extractErrorMessage } from "../../../utils/http";
 import { sha256Hex } from "../../../utils/crypto";
 import { fetchMarvelMatchHistoryCommunity, fetchMarvelPlayerProfile } from "./community";
 import { fetchMarvelProfileTrackerNetwork } from "./trackerNetwork";
@@ -119,7 +120,7 @@ export async function ingestMarvelRivalsAccount(account: GameAccount): Promise<{
       inserted += 1;
     } catch (matchErr: any) {
       matchErrors += 1;
-      console.error(`[Marvel Rivals] Failed to insert match (uid: ${m?.match_uid ?? "?"}):`, matchErr?.message ?? matchErr);
+      console.error(`[Marvel Rivals] Failed to insert match (uid: ${m?.match_uid ?? "?"}):`, extractErrorMessage(matchErr));
       // Continue processing remaining matches instead of failing the entire ingest
     }
   }

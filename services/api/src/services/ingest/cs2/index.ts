@@ -2,6 +2,7 @@ import type { GameAccount } from "@prisma/client";
 import { prisma } from "../../../prisma";
 import { putObject } from "../../storage";
 import { sha256Hex } from "../../../utils/crypto";
+import { extractErrorMessage } from "../../../utils/http";
 import { fetchCs2CumulativeStats, mapCs2CumulativeToCanonical, statsArrayToMap, diffCanonical } from "./steamStats";
 
 export async function ingestCs2Account(account: GameAccount): Promise<{ inserted: number; snapshotId: string }> {
@@ -25,7 +26,7 @@ export async function ingestCs2Account(account: GameAccount): Promise<{ inserted
     if (status === 403) {
       throw new Error("Steam API key is invalid or expired.");
     }
-    throw new Error(`Steam API error: ${e?.message || e}`);
+    throw new Error(`Steam API error: ${extractErrorMessage(e)}`);
   }
   const rawJson = JSON.stringify(payload);
 
