@@ -25,7 +25,10 @@ export async function putObject(params: {
   contentType: string;
   cacheControl?: string;
 }): Promise<{ key: string; publicUrl: string }> {
-  if (!s3Configured) throw new Error("S3 not configured");
+  if (!s3Configured) {
+    // S3 not configured — skip raw payload storage, continue with processing
+    return { key: params.key, publicUrl: "" };
+  }
   await s3.send(
     new PutObjectCommand({
       Bucket: env.S3_BUCKET,
