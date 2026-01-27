@@ -1,4 +1,7 @@
 {
   "installCommand": "cd ../.. && pnpm install --frozen-lockfile",
-  "buildCommand": "next build"
+  "buildCommand": "next build",
+  "rewrites": [
+    { "source": "/api/:path*", "destination": "https://tactix-6jc8.onrender.com/:path*" }
+  ]
 }
