@@ -24,6 +24,8 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
 
   const [isAuthError, setIsAuthError] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const [refreshMsg, setRefreshMsg] = useState<{ type: "success" | "warn" | "error"; text: string } | null>(null);
 
   async function load() {
     setLoading(true);
@@ -49,11 +51,29 @@ export default function DashboardPage() {
   }, [mode]);
 
   async function refresh() {
+    setRefreshing(true);
+    setRefreshMsg(null);
     try {
-      await apiPost("/ingest/refresh");
+      const res = await apiPost<{ ok: boolean; result: { ok: boolean; results: Array<{ ok: boolean; game?: string; inserted?: number; error?: string }> } }>("/ingest/refresh");
+      const results = res?.result?.results ?? [];
+      const failed = results.filter(r => !r.ok);
+      const succeeded = results.filter(r => r.ok);
+
+      if (failed.length > 0 && succeeded.length === 0) {
+        setRefreshMsg({ type: "error", text: failed.map(f => `${f.game}: ${f.error}`).join(" · ") });
+      } else if (failed.length > 0) {
+        const inserted = succeeded.reduce((s, r) => s + (r.inserted ?? 0), 0);
+        setRefreshMsg({ type: "warn", text: `${inserted} new matches. Failed: ${failed.map(f => `${f.game}: ${f.error}`).join(", ")}` });
+      } else if (succeeded.length > 0) {
+        const inserted = succeeded.reduce((s, r) => s + (r.inserted ?? 0), 0);
+        setRefreshMsg({ type: "success", text: inserted > 0 ? `Synced ${inserted} new match${inserted === 1 ? "" : "es"}` : "All games up to date" });
+      }
       await load();
-    } catch (e) {
+    } catch (e: any) {
+      setRefreshMsg({ type: "error", text: e?.message ?? "Refresh failed" });
       await load();
+    } finally {
+      setRefreshing(false);
     }
   }
 
@@ -136,9 +156,10 @@ export default function DashboardPage() {
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               onClick={refresh}
-              className="rounded-lg bg-gradient-to-r from-cyan-500 to-blue-600 px-4 py-2 text-sm font-medium text-white shadow-lg shadow-cyan-500/20 hover:shadow-cyan-500/30 transition-shadow"
+              disabled={refreshing}
+              className="rounded-lg bg-gradient-to-r from-cyan-500 to-blue-600 px-4 py-2 text-sm font-medium text-white shadow-lg shadow-cyan-500/20 hover:shadow-cyan-500/30 transition-shadow disabled:opacity-50"
             >
-              Refresh stats
+              {refreshing ? "Syncing..." : "Refresh stats"}
             </motion.button>
             <motion.button
               whileHover={{ scale: 1.02 }}
@@ -181,6 +202,29 @@ export default function DashboardPage() {
             </motion.button>
           </div>
         </motion.header>
+
+        {/* Refresh result message */}
+        <AnimatePresence>
+          {refreshMsg && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              className={`mt-3 rounded-lg px-4 py-2.5 text-sm border ${
+                refreshMsg.type === "success"
+                  ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400"
+                  : refreshMsg.type === "warn"
+                    ? "bg-amber-500/10 border-amber-500/30 text-amber-400"
+                    : "bg-red-500/10 border-red-500/30 text-red-400"
+              }`}
+            >
+              <div className="flex items-center justify-between gap-2">
+                <span className="break-all">{refreshMsg.text}</span>
+                <button onClick={() => setRefreshMsg(null)} className="shrink-0 opacity-60 hover:opacity-100">&times;</button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Mode selector */}
         <motion.section
