@@ -1,59 +1,33 @@
 import { Queue } from "bullmq";
 import IORedis from "ioredis";
 import { env } from "./env";
-import net from "net";
 
 let redis: IORedis | null = null;
 let ingestQueue: Queue | null = null;
 let computeQueue: Queue | null = null;
 
-// Parse Redis URL to get host/port for a quick probe
-function parseRedisUrl(url: string): { host: string; port: number } {
-  try {
-    const u = new URL(url);
-    return { host: u.hostname || "127.0.0.1", port: parseInt(u.port) || 6379 };
-  } catch {
-    return { host: "127.0.0.1", port: 6379 };
-  }
-}
-
-// Quick TCP probe to check if Redis is reachable before creating connections
-function probePort(host: string, port: number, timeoutMs = 1500): Promise<boolean> {
-  return new Promise((resolve) => {
-    const sock = new net.Socket();
-    const timer = setTimeout(() => { sock.destroy(); resolve(false); }, timeoutMs);
-    sock.once("connect", () => { clearTimeout(timer); sock.destroy(); resolve(true); });
-    sock.once("error", () => { clearTimeout(timer); sock.destroy(); resolve(false); });
-    sock.connect(port, host);
-  });
-}
-
-// Initialize Redis asynchronously – only create connections if Redis is reachable
+// Initialize Redis – connect directly and let ioredis handle retries
 (async () => {
-  const { host, port } = parseRedisUrl(env.REDIS_URL);
-  const reachable = await probePort(host, port);
-
-  if (!reachable) {
-    console.warn(`[Queue] Redis not reachable at ${host}:${port} – queue jobs will be skipped.`);
-    return;
-  }
-
   try {
     const useTls = env.REDIS_URL.startsWith("rediss://");
     redis = new IORedis(env.REDIS_URL, {
       maxRetriesPerRequest: null,
       ...(useTls ? { tls: {} } : {}),
+      lazyConnect: true,
     });
 
     redis.on("error", () => {
       // Suppress repeated connection errors in the log
     });
 
+    await redis.connect();
+
     ingestQueue = new Queue("ingest", { connection: redis as any });
     computeQueue = new Queue("compute", { connection: redis as any });
     console.log("[Queue] Redis connected");
   } catch (err: any) {
-    console.warn("[Queue] Failed to initialize Redis/BullMQ:", err.message);
+    console.warn("[Queue] Redis unavailable – queue jobs will be skipped:", err.message);
+    redis = null;
   }
 })();
 
