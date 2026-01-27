@@ -28,12 +28,14 @@ export async function getDashboard(mode: "ALL" | "RANKED" | "UNRANKED" = "ALL") 
 }
 
 export function authUrl(provider: "google" | "discord") {
-  const redirect = encodeURIComponent(`${window.location.origin}/dashboard`);
+  const origin = typeof window !== "undefined" ? window.location.origin : "";
+  const redirect = encodeURIComponent(`${origin}/dashboard`);
   return `${API_BASE}/auth/${provider}/start?redirect=${redirect}`;
 }
 
 export function steamLinkUrl() {
-  const redirect = encodeURIComponent(`${window.location.origin}/dashboard/settings`);
+  const origin = typeof window !== "undefined" ? window.location.origin : "";
+  const redirect = encodeURIComponent(`${origin}/dashboard/settings`);
   return `${API_BASE}/auth/steam/start?redirect=${redirect}`;
 }
 

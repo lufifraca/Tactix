@@ -1,22 +1,26 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { apiGet, authUrl } from "@/lib/api";
 
 export default function LoginPage() {
+  const router = useRouter();
   const [authed, setAuthed] = useState<boolean | null>(null);
   const [checking, setChecking] = useState(true);
 
   useEffect(() => {
     apiGet<{ authenticated: boolean }>("/auth/session")
-      .then((r) => setAuthed(r.authenticated))
+      .then((r) => {
+        setAuthed(r.authenticated);
+        if (r.authenticated) router.replace("/dashboard");
+      })
       .catch(() => setAuthed(false))
       .finally(() => setChecking(false));
-  }, []);
+  }, [router]);
 
   if (authed === true) {
-    window.location.href = "/dashboard";
     return null;
   }
 
