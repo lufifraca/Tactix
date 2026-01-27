@@ -1,15 +1,19 @@
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 import { env } from "../env";
 
-export const s3 = new S3Client({
-  region: env.S3_REGION,
-  endpoint: env.S3_ENDPOINT,
-  credentials: {
-    accessKeyId: env.S3_ACCESS_KEY_ID,
-    secretAccessKey: env.S3_SECRET_ACCESS_KEY,
-  },
-  forcePathStyle: true, // important for MinIO
-});
+const s3Configured = !!(env.S3_ENDPOINT && env.S3_ACCESS_KEY_ID && env.S3_SECRET_ACCESS_KEY);
+
+export const s3 = s3Configured
+  ? new S3Client({
+      region: env.S3_REGION,
+      endpoint: env.S3_ENDPOINT!,
+      credentials: {
+        accessKeyId: env.S3_ACCESS_KEY_ID!,
+        secretAccessKey: env.S3_SECRET_ACCESS_KEY!,
+      },
+      forcePathStyle: true, // important for MinIO
+    })
+  : (null as unknown as S3Client);
 
 export function encodeS3Key(key: string): string {
   return key.split('/').map(encodeURIComponent).join('/');
@@ -21,6 +25,7 @@ export async function putObject(params: {
   contentType: string;
   cacheControl?: string;
 }): Promise<{ key: string; publicUrl: string }> {
+  if (!s3Configured) throw new Error("S3 not configured");
   await s3.send(
     new PutObjectCommand({
       Bucket: env.S3_BUCKET,
