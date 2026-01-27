@@ -175,8 +175,8 @@ export async function getValMatch(
 }
 
 /**
- * Validate a Riot ID exists and return account info
- * This is the main function used for linking accounts
+ * Validate a Riot ID exists and return account info.
+ * Uses Henrik's API (no expiring key) with Riot API as fallback.
  */
 export async function validateRiotId(
   riotId: string, // Format: "GameName#TagLine"
@@ -192,5 +192,23 @@ export async function validateRiotId(
     throw new Error("Invalid Riot ID format. Use: Name#Tag");
   }
 
-  return getAccountByRiotId(gameName.trim(), tagLine.trim(), region);
+  const name = gameName.trim();
+  const tag = tagLine.trim();
+
+  // Prefer Henrik API (doesn't require a production Riot key)
+  if (env.HENRIK_API_KEY) {
+    try {
+      const { henrikGetAccount } = await import("./henrikApi");
+      const account = await henrikGetAccount(name, tag);
+      return { puuid: account.puuid, gameName: account.name, tagLine: account.tag };
+    } catch (e: any) {
+      // If Henrik fails with 404, surface it clearly
+      if (e.message?.includes("404") || e.message?.includes("not found")) {
+        throw new Error("Riot ID not found. Please check your Name#Tag and try again.");
+      }
+      // For other Henrik errors, fall through to Riot API
+    }
+  }
+
+  return getAccountByRiotId(name, tag, region);
 }
