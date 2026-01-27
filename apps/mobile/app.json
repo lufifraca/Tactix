@@ -1,0 +1,24 @@
+{
+  "expo": {
+    "name": "tactix",
+    "slug": "tactix",
+    "scheme": "tactix",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "dark",
+    "splash": {
+      "backgroundColor": "#0b0d10"
+    },
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#0b0d10"
+      }
+    },
+    "extra": {
+      "apiBaseUrl": "http://localhost:3001"
+    }
+  }
+}

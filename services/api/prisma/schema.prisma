@@ -1,0 +1,367 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Enums removed to support generic games/providers
+// enum AuthProvider { ... } -> String
+// enum Game { ... } -> String
+// enum GameProvider { ... } -> String
+// enum SkillDomain { ... } -> String
+// enum MatchMode { ... } -> String
+// enum MatchResult { ... } -> String
+// enum QuestStatus { ... } -> String
+// enum RewardType { ... } -> String
+// enum SubscriptionStatus { ... } -> String
+
+// We keep AuthProvider as specific known providers for Auth (Google/Discord/Steam)
+enum AuthProvider {
+  GOOGLE
+  DISCORD
+  STEAM
+}
+
+// All other gameplay enums are now Strings to support dynamic imports
+
+model User {
+  id          String   @id @default(cuid())
+  email       String?  @unique
+  displayName String?
+  avatarUrl   String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  identities        Identity[]
+  gameAccounts      GameAccount[]
+  quests            Quest[]
+  briefs            DailyBrief[]
+  rewards           Reward[]
+  skillScores       SkillScore[]
+  subscription      Subscription?
+  pushTokens        PushToken[]
+  streak            Streak?
+  matches           Match[]
+  statSnapshots     StatSnapshot[]
+  rankSnapshots     RankSnapshot[]
+  sessions          Session[]
+  sessionAnalytics  SessionAnalytics[]
+  gamePreferences   UserGamePreference[]
+}
+
+model Identity {
+  id             String       @id @default(cuid())
+  userId         String
+  provider       AuthProvider
+  providerUserId String
+  email          String?
+  displayName    String?
+  avatarUrl      String?
+  accessToken    String?
+  refreshToken   String?
+  expiresAt      DateTime?
+  rawProfile     Json
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerUserId])
+  @@index([userId])
+}
+
+model GameAccount {
+  id                String       @id @default(cuid())
+  userId            String
+  game              String       // generic: "CS2", "MARVEL_RIVALS", "CLASH_ROYALE"
+  provider          String       // generic: "STEAM", "SUPERCELL", "TRACKER_NETWORK"
+  externalId        String
+  displayName       String
+  platform          String?
+  steamGameAuthCode String?
+  cs2KnownMatchCode String?
+  meta              Json?
+  linkedAt          DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  matches       Match[]
+  statSnapshots StatSnapshot[]
+  rankSnapshots RankSnapshot[]
+
+  @@unique([game, provider, externalId])
+  @@index([userId, game])
+}
+
+model Match {
+  id               String       @id @default(cuid())
+  userId           String
+  gameAccountId    String
+  game             String
+  matchId          String
+  startedAt        DateTime?
+  endedAt          DateTime?
+  mode             String       @default("UNKNOWN")
+  map              String?
+  result           String       @default("UNKNOWN")
+  durationSeconds  Int?
+  normalizedStats  Json
+  rawPayloadS3Key  String?
+  rawPayloadSha256 String?
+  source           String
+  ingestedAt       DateTime     @default(now())
+
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  gameAccount GameAccount @relation(fields: [gameAccountId], references: [id], onDelete: Cascade)
+
+  @@unique([game, matchId])
+  @@index([userId, game, endedAt])
+  @@index([gameAccountId, endedAt])
+}
+
+model StatSnapshot {
+  id            String       @id @default(cuid())
+  userId        String
+  gameAccountId String
+  game          String
+  capturedAt    DateTime     @default(now())
+  mode          String       @default("UNKNOWN")
+  stats         Json
+  source        String
+
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  gameAccount GameAccount @relation(fields: [gameAccountId], references: [id], onDelete: Cascade)
+
+  @@index([userId, game, capturedAt])
+  @@index([gameAccountId, capturedAt])
+}
+
+model SkillScore {
+  id         String      @id @default(cuid())
+  userId     String
+  game       String?
+  mode       String      @default("UNKNOWN")
+  domain     String
+  score      Int
+  computedAt DateTime    @default(now())
+  details    Json?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, domain, computedAt])
+  @@index([userId, game, mode, computedAt])
+}
+
+model Quest {
+  id              String      @id @default(cuid())
+  userId          String
+  date            DateTime
+  slot            Int
+  isPremium       Boolean     @default(false)
+  game            String?
+  domain          String
+  title           String
+  description     String
+  modeEligibility String
+  criteria        Json
+  progress        Json
+  status          String      @default("ACTIVE")
+  completedAt     DateTime?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, date, slot])
+  @@index([userId, date, status])
+}
+
+model DailyBrief {
+  id        String   @id @default(cuid())
+  userId    String
+  date      DateTime
+  bullets   Json
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, date])
+}
+
+model Reward {
+  id         String     @id @default(cuid())
+  userId     String
+  type       String     // "BADGE", "CARD"
+  title      String
+  caption    String
+  assetS3Key String
+  shareId    String     @unique
+  isPublic   Boolean    @default(false)
+  createdAt  DateTime   @default(now())
+  meta       Json?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+}
+
+model Subscription {
+  id                   String             @id @default(cuid())
+  userId               String             @unique
+  stripeCustomerId     String?
+  stripeSubscriptionId String?
+  status               String             @default("INACTIVE")
+  currentPeriodEnd     DateTime?
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model PushToken {
+  id         String    @id @default(cuid())
+  userId     String
+  platform   String
+  token      String    @unique
+  createdAt  DateTime  @default(now())
+  lastUsedAt DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model Streak {
+  id                String    @id @default(cuid())
+  userId            String    @unique
+  current           Int       @default(0)
+  best              Int       @default(0)
+  lastCompletedDate DateTime?
+  updatedAt         DateTime  @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model RankSnapshot {
+  id            String       @id @default(cuid())
+  userId        String
+  gameAccountId String?
+  game          String       // "CS2", "MARVEL_RIVALS", "CLASH_ROYALE", "BRAWL_STARS"
+  mode          String?      // "RANKED", "COMPETITIVE", null for games with single ladder
+  rankTier      String?      // e.g., "Gold Nova III", "Diamond", "Legendary League"
+  rankDivision  String?      // e.g., "III", "2" (for games with divisions within tiers)
+  rankNumeric   Int?         // MMR, trophies, or rank points as numeric value
+  percentile    Float?       // Optional: player's percentile rank (0-100)
+  capturedAt    DateTime     @default(now())
+  source        String       // Where we got this data: "STEAM_API", "MATCH_HISTORY", "SUPERCELL_API"
+  meta          Json?        // Any game-specific rank metadata
+
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  gameAccount GameAccount? @relation(fields: [gameAccountId], references: [id], onDelete: SetNull)
+
+  @@index([userId, game, capturedAt])
+  @@index([gameAccountId, capturedAt])
+  @@index([userId, game, mode, capturedAt])
+}
+
+// Session Intelligence Models
+model Session {
+  id             String    @id @default(cuid())
+  userId         String
+  game           String    // "CS2", "MARVEL_RIVALS", "CLASH_ROYALE", "BRAWL_STARS"
+  startedAt      DateTime
+  endedAt        DateTime
+  matchCount     Int
+  winCount       Int
+  lossCount      Int
+  drawCount      Int       @default(0)
+  totalDuration  Int       // total duration in seconds
+  longestStreak  Int       @default(0)  // longest win or loss streak in session
+  streakType     String?   // "WIN" or "LOSS" for the longest streak
+  createdAt      DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, game, startedAt])
+  @@index([userId, startedAt])
+}
+
+model SessionAnalytics {
+  id                    String   @id @default(cuid())
+  userId                String
+  game                  String?  // null means aggregated across all games
+
+  // Time of day performance (win counts / total counts per bucket)
+  morningWins           Int      @default(0)  // 6-12
+  morningTotal          Int      @default(0)
+  afternoonWins         Int      @default(0)  // 12-18
+  afternoonTotal        Int      @default(0)
+  eveningWins           Int      @default(0)  // 18-24
+  eveningTotal          Int      @default(0)
+  nightWins             Int      @default(0)  // 0-6
+  nightTotal            Int      @default(0)
+
+  // Day of week performance
+  mondayWins            Int      @default(0)
+  mondayTotal           Int      @default(0)
+  tuesdayWins           Int      @default(0)
+  tuesdayTotal          Int      @default(0)
+  wednesdayWins         Int      @default(0)
+  wednesdayTotal        Int      @default(0)
+  thursdayWins          Int      @default(0)
+  thursdayTotal         Int      @default(0)
+  fridayWins            Int      @default(0)
+  fridayTotal           Int      @default(0)
+  saturdayWins          Int      @default(0)
+  saturdayTotal         Int      @default(0)
+  sundayWins            Int      @default(0)
+  sundayTotal           Int      @default(0)
+
+  // Session length impact
+  shortSessionWins      Int      @default(0)  // 1-3 games
+  shortSessionTotal     Int      @default(0)
+  mediumSessionWins     Int      @default(0)  // 4-7 games
+  mediumSessionTotal    Int      @default(0)
+  longSessionWins       Int      @default(0)  // 8+ games
+  longSessionTotal      Int      @default(0)
+
+  // Tilt detection: performance after consecutive losses
+  afterLoss1Wins        Int      @default(0)
+  afterLoss1Total       Int      @default(0)
+  afterLoss2Wins        Int      @default(0)
+  afterLoss2Total       Int      @default(0)
+  afterLoss3PlusWins    Int      @default(0)
+  afterLoss3PlusTotal   Int      @default(0)
+
+  // Optimal session tracking
+  avgWinRateByPosition  Json?    // { "1": 0.55, "2": 0.52, ... } win rate by match position in session
+
+  lastComputedAt        DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, game])
+  @@index([userId])
+}
+
+// User preferences for Steam library games (favorites, tracking requests)
+model UserGamePreference {
+  id           String   @id @default(cuid())
+  userId       String
+  steamAppId   Int      // Steam app ID
+  gameName     String   // Store name for easier querying
+  isFavorite   Boolean  @default(false)
+  wantTracking Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, steamAppId])
+  @@index([userId, isFavorite])
+  @@index([wantTracking])
+}

@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: tactix-api
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: JWT_SECRET
+        generateValue: true
+      - key: API_PORT
+        value: "10000"
+      - key: NODE_ENV
+        value: production
+      # Set these manually in Render dashboard:
+      # DATABASE_URL        → from Neon
+      # REDIS_URL           → from Upstash
+      # API_BASE_URL        → https://tactix-api.onrender.com
+      # WEB_BASE_URL        → https://your-app.vercel.app
+      # S3_ENDPOINT         → from R2 or Supabase Storage
+      # S3_BUCKET, S3_ACCESS_KEY_ID, S3_SECRET_ACCESS_KEY, S3_PUBLIC_BASE_URL
+      # GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REDIRECT_URI
+      # (plus any game API keys you want)

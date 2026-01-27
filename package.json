@@ -1,0 +1,14 @@
+{
+  "name": "tactix",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@9.12.2",
+  "scripts": {
+    "docker:up": "docker compose up -d",
+    "docker:down": "docker compose down -v",
+    "api:dev": "pnpm --filter @tactix/api dev",
+    "worker:dev": "pnpm --filter @tactix/api worker:dev",
+    "web:dev": "pnpm --filter @tactix/web dev",
+    "mobile:dev": "pnpm --filter @tactix/mobile dev"
+  }
+}

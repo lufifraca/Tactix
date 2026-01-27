@@ -1,0 +1,62 @@
+-- Convert all enum columns to text (except AuthProvider which we keep)
+
+-- First, alter columns to text with defaults removed, then add back text defaults
+
+-- GameAccount
+ALTER TABLE "GameAccount" ALTER COLUMN "game" DROP DEFAULT;
+ALTER TABLE "GameAccount" ALTER COLUMN "game" TYPE TEXT;
+ALTER TABLE "GameAccount" ALTER COLUMN "provider" DROP DEFAULT;
+ALTER TABLE "GameAccount" ALTER COLUMN "provider" TYPE TEXT;
+
+-- Match
+ALTER TABLE "Match" ALTER COLUMN "game" DROP DEFAULT;
+ALTER TABLE "Match" ALTER COLUMN "game" TYPE TEXT;
+ALTER TABLE "Match" ALTER COLUMN "mode" DROP DEFAULT;
+ALTER TABLE "Match" ALTER COLUMN "mode" TYPE TEXT;
+ALTER TABLE "Match" ALTER COLUMN "mode" SET DEFAULT 'UNKNOWN';
+ALTER TABLE "Match" ALTER COLUMN "result" DROP DEFAULT;
+ALTER TABLE "Match" ALTER COLUMN "result" TYPE TEXT;
+ALTER TABLE "Match" ALTER COLUMN "result" SET DEFAULT 'UNKNOWN';
+ALTER TABLE "Match" ALTER COLUMN "source" DROP DEFAULT;
+ALTER TABLE "Match" ALTER COLUMN "source" TYPE TEXT;
+
+-- StatSnapshot
+ALTER TABLE "StatSnapshot" ALTER COLUMN "game" DROP DEFAULT;
+ALTER TABLE "StatSnapshot" ALTER COLUMN "game" TYPE TEXT;
+ALTER TABLE "StatSnapshot" ALTER COLUMN "mode" DROP DEFAULT;
+ALTER TABLE "StatSnapshot" ALTER COLUMN "mode" TYPE TEXT;
+ALTER TABLE "StatSnapshot" ALTER COLUMN "mode" SET DEFAULT 'UNKNOWN';
+ALTER TABLE "StatSnapshot" ALTER COLUMN "source" DROP DEFAULT;
+ALTER TABLE "StatSnapshot" ALTER COLUMN "source" TYPE TEXT;
+
+-- SkillScore
+ALTER TABLE "SkillScore" ALTER COLUMN "game" DROP DEFAULT;
+ALTER TABLE "SkillScore" ALTER COLUMN "game" TYPE TEXT;
+ALTER TABLE "SkillScore" ALTER COLUMN "mode" DROP DEFAULT;
+ALTER TABLE "SkillScore" ALTER COLUMN "mode" TYPE TEXT;
+ALTER TABLE "SkillScore" ALTER COLUMN "mode" SET DEFAULT 'UNKNOWN';
+
+-- Quest
+ALTER TABLE "Quest" ALTER COLUMN "game" DROP DEFAULT;
+ALTER TABLE "Quest" ALTER COLUMN "game" TYPE TEXT;
+ALTER TABLE "Quest" ALTER COLUMN "status" DROP DEFAULT;
+ALTER TABLE "Quest" ALTER COLUMN "status" TYPE TEXT;
+ALTER TABLE "Quest" ALTER COLUMN "status" SET DEFAULT 'ACTIVE';
+
+-- Reward
+ALTER TABLE "Reward" ALTER COLUMN "type" DROP DEFAULT;
+ALTER TABLE "Reward" ALTER COLUMN "type" TYPE TEXT;
+
+-- Subscription
+ALTER TABLE "Subscription" ALTER COLUMN "status" DROP DEFAULT;
+ALTER TABLE "Subscription" ALTER COLUMN "status" TYPE TEXT;
+ALTER TABLE "Subscription" ALTER COLUMN "status" SET DEFAULT 'INACTIVE';
+
+-- Drop all enums except AuthProvider
+DROP TYPE IF EXISTS "Game";
+DROP TYPE IF EXISTS "GameProvider";
+DROP TYPE IF EXISTS "MatchMode";
+DROP TYPE IF EXISTS "MatchResult";
+DROP TYPE IF EXISTS "QuestStatus";
+DROP TYPE IF EXISTS "RewardType";
+DROP TYPE IF EXISTS "SubscriptionStatus";
