@@ -83,6 +83,33 @@ export async function ingestRoutes(app: FastifyInstance) {
     return { ok: true, diagnostics: checks };
   });
 
+  /**
+   * GET /ingest/diagnostics/full
+   * Runs the actual ingest pipeline per-account and captures step-by-step results.
+   * Safe to call multiple times (deduplicates matches).
+   */
+  app.get("/diagnostics/full", async (req: AuthedRequest) => {
+    const user = await requireUser(req);
+    const accounts = await prisma.gameAccount.findMany({ where: { userId: user.id } });
+    const results: any[] = [];
+
+    for (const a of accounts) {
+      const entry: any = { game: a.game, provider: a.provider, externalId: a.externalId };
+      try {
+        const result = await ingestGameAccount(a.id);
+        entry.status = "ok";
+        entry.result = result;
+      } catch (e: any) {
+        entry.status = "error";
+        entry.error = e?.message || (typeof e === "string" ? e : "Unknown error");
+        entry.stack = e?.stack?.split("\n").slice(0, 5) ?? [];
+      }
+      results.push(entry);
+    }
+
+    return { ok: true, results };
+  });
+
   app.get("/status", async (req: AuthedRequest) => {
     const user = await requireUser(req);
     const last = await prisma.match.findFirst({

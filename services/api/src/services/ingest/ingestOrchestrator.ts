@@ -75,8 +75,9 @@ export async function ingestUserAll(userId: string) {
     try {
       results.push(await ingestGameAccount(a.id));
     } catch (err: any) {
-      console.error(`[Ingest] Error ingesting account ${a.id} (${a.game}):`, err.message);
-      results.push({ ok: false, error: err.message, game: a.game });
+      const errorMsg = err?.message || (typeof err === "string" ? err : "Unknown ingest error");
+      console.error(`[Ingest] Error ingesting account ${a.id} (${a.game}):`, errorMsg, err?.stack ?? err);
+      results.push({ ok: false, error: errorMsg, game: a.game });
     }
   }
   return { ok: true, results };

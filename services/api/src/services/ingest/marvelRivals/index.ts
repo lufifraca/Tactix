@@ -75,36 +75,57 @@ export async function ingestMarvelRivalsAccount(account: GameAccount): Promise<{
   }
 
   let inserted = 0;
+  let matchErrors = 0;
+
+  console.log(`[Marvel Rivals] Processing ${matches.length} matches for account ${account.id} (source: ${sourceUsed})`);
 
   for (const m of matches) {
-    const norm = sourceUsed === "TRACKER_NETWORK"
-      ? normalizeMarvelMatchFromTRN(m)
-      : normalizeMarvelMatchFromCommunity(m);
+    try {
+      const norm = sourceUsed === "TRACKER_NETWORK"
+        ? normalizeMarvelMatchFromTRN(m)
+        : normalizeMarvelMatchFromCommunity(m);
 
-    if (!norm.matchId) continue;
+      if (!norm.matchId) continue;
 
-    const existed = await prisma.match.findUnique({ where: { game_matchId: { game: "MARVEL_RIVALS", matchId: norm.matchId } } });
-    if (existed) continue;
+      // Use findFirst for robustness (works even without compound unique index)
+      const existed = await prisma.match.findFirst({
+        where: { game: "MARVEL_RIVALS", matchId: norm.matchId },
+        select: { id: true },
+      });
+      if (existed) continue;
 
-    await prisma.match.create({
-      data: {
-        userId: account.userId,
-        gameAccountId: account.id,
-        game: "MARVEL_RIVALS",
-        matchId: norm.matchId,
-        startedAt: norm.startedAt ?? undefined,
-        endedAt: norm.endedAt ?? undefined,
-        mode: norm.mode,
-        map: norm.map ?? undefined,
-        result: norm.result,
-        durationSeconds: norm.durationSeconds ?? undefined,
-        normalizedStats: norm.normalizedStats as any,
-        rawPayloadS3Key: rawPayloadS3Key ?? undefined,
-        rawPayloadSha256: rawPayloadSha256 ?? undefined,
-        source: sourceUsed,
-      },
-    });
-    inserted += 1;
+      // Validate dates before insert (Invalid Date causes Prisma errors)
+      const endedAt = norm.endedAt instanceof Date && !isNaN(norm.endedAt.getTime()) ? norm.endedAt : undefined;
+      const startedAt = norm.startedAt instanceof Date && !isNaN(norm.startedAt.getTime()) ? norm.startedAt : undefined;
+
+      await prisma.match.create({
+        data: {
+          userId: account.userId,
+          gameAccountId: account.id,
+          game: "MARVEL_RIVALS",
+          matchId: norm.matchId,
+          startedAt,
+          endedAt,
+          mode: norm.mode,
+          map: norm.map ?? undefined,
+          result: norm.result,
+          durationSeconds: norm.durationSeconds ?? undefined,
+          normalizedStats: norm.normalizedStats as any,
+          rawPayloadS3Key: rawPayloadS3Key ?? undefined,
+          rawPayloadSha256: rawPayloadSha256 ?? undefined,
+          source: sourceUsed,
+        },
+      });
+      inserted += 1;
+    } catch (matchErr: any) {
+      matchErrors += 1;
+      console.error(`[Marvel Rivals] Failed to insert match (uid: ${m?.match_uid ?? "?"}):`, matchErr?.message ?? matchErr);
+      // Continue processing remaining matches instead of failing the entire ingest
+    }
+  }
+
+  if (matchErrors > 0) {
+    console.warn(`[Marvel Rivals] ${matchErrors}/${matches.length} matches failed to insert, ${inserted} succeeded`);
   }
 
   // Extract rank from player profile + most recent ranked match

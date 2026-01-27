@@ -14,7 +14,19 @@ export async function ingestCs2Account(account: GameAccount): Promise<{ inserted
   // 3. Steam profile scraping (if public)
   // TODO: Implement rank extraction when share code system is added
 
-  const payload = await fetchCs2CumulativeStats(steamid);
+  let payload;
+  try {
+    payload = await fetchCs2CumulativeStats(steamid);
+  } catch (e: any) {
+    const status = e?.statusCode;
+    if (status === 502 || status === 500) {
+      throw new Error(`Steam API returned ${status}. CS2 game stats may be set to private, or Steam is temporarily unavailable.`);
+    }
+    if (status === 403) {
+      throw new Error("Steam API key is invalid or expired.");
+    }
+    throw new Error(`Steam API error: ${e?.message || e}`);
+  }
   const rawJson = JSON.stringify(payload);
 
   const rawKey = `raw/cs2/steam/${account.userId}/${Date.now()}_${sha256Hex(rawJson).slice(0, 10)}.json`;

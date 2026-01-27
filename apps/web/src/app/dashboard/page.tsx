@@ -60,10 +60,10 @@ export default function DashboardPage() {
       const succeeded = results.filter(r => r.ok);
 
       if (failed.length > 0 && succeeded.length === 0) {
-        setRefreshMsg({ type: "error", text: failed.map(f => `${f.game}: ${f.error}`).join(" · ") });
+        setRefreshMsg({ type: "error", text: failed.map(f => `${f.game}: ${f.error || "unknown error"}`).join(" · ") });
       } else if (failed.length > 0) {
         const inserted = succeeded.reduce((s, r) => s + (r.inserted ?? 0), 0);
-        setRefreshMsg({ type: "warn", text: `${inserted} new matches. Failed: ${failed.map(f => `${f.game}: ${f.error}`).join(", ")}` });
+        setRefreshMsg({ type: "warn", text: `${inserted} new matches. Failed: ${failed.map(f => `${f.game}: ${f.error || "unknown error"}`).join(", ")}` });
       } else if (succeeded.length > 0) {
         const inserted = succeeded.reduce((s, r) => s + (r.inserted ?? 0), 0);
         setRefreshMsg({ type: "success", text: inserted > 0 ? `Synced ${inserted} new match${inserted === 1 ? "" : "es"}` : "All games up to date" });
