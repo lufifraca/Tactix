@@ -40,31 +40,43 @@ export async function dashboardRoutes(app: FastifyInstance) {
     const dateStr = todayUtc();
     const questCount = subscriptionActive ? 3 : 1;
 
-    await ensureDailyQuests(user.id, dateStr, questCount, subscriptionActive);
-    await recomputeQuestProgress(user.id, dateStr);
-    await ensureDailyBrief(user.id, dateStr);
+    // These init calls are non-critical — a failure shouldn't block the dashboard
+    try {
+      await ensureDailyQuests(user.id, dateStr, questCount, subscriptionActive);
+      await recomputeQuestProgress(user.id, dateStr);
+    } catch (e) {
+      console.error("Quest init failed (non-fatal):", e);
+    }
 
-    // Ensure at least one recent skill computation exists.
-    const latestSkill = await prisma.skillScore.findFirst({
-      where: { userId: user.id, game: null },
-      orderBy: { computedAt: "desc" },
-      select: { computedAt: true, domain: true },
-    });
+    try {
+      await ensureDailyBrief(user.id, dateStr);
+    } catch (e) {
+      console.error("Daily brief init failed (non-fatal):", e);
+    }
 
-    // Force recompute if data is old OR if using legacy domains (AIM_QUALITY)
-    const isLegacy = latestSkill?.domain === "AIM_QUALITY";
-    const needSkill = !latestSkill || isLegacy || Date.now() - latestSkill.computedAt.getTime() > 6 * 60 * 60 * 1000;
+    // Skill scores — also non-critical
+    let skills: Array<{ domain: string; score: number; delta7d: number; details: any; attribution: any }> = [];
+    try {
+      const latestSkill = await prisma.skillScore.findFirst({
+        where: { userId: user.id, game: null },
+        orderBy: { computedAt: "desc" },
+        select: { computedAt: true, domain: true },
+      });
 
-    if (needSkill) await upsertDailySkillScores(user.id, dateStr);
+      const isLegacy = latestSkill?.domain === "AIM_QUALITY";
+      const needSkill = !latestSkill || isLegacy || Date.now() - latestSkill.computedAt.getTime() > 6 * 60 * 60 * 1000;
 
-    const deltas = await getSkillScoresForDashboard(user.id);
-    const live = await computeCrossGameSkillScores(user.id, mode);
-    const skills = live.map((s) => {
-      const d = deltas.find((x) => x.domain === s.domain);
-      return { domain: s.domain, score: s.score, delta7d: d?.delta7d ?? 0, details: s.details, attribution: s.attribution };
-    });
+      if (needSkill) await upsertDailySkillScores(user.id, dateStr);
 
-    console.log("DEBUG: Dashboard Skills Returning:", skills.map(s => s.domain));
+      const deltas = await getSkillScoresForDashboard(user.id);
+      const live = await computeCrossGameSkillScores(user.id, mode);
+      skills = live.map((s) => {
+        const d = deltas.find((x) => x.domain === s.domain);
+        return { domain: s.domain, score: s.score, delta7d: d?.delta7d ?? 0, details: s.details, attribution: s.attribution };
+      });
+    } catch (e) {
+      console.error("Skill scores failed (non-fatal):", e);
+    }
 
     const date = new Date(`${dateStr}T00:00:00.000Z`);
     const brief = await prisma.dailyBrief.findUnique({ where: { userId_date: { userId: user.id, date } } });

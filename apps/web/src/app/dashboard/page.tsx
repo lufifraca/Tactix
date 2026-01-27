@@ -23,14 +23,20 @@ export default function DashboardPage() {
   const [err, setErr] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const [isAuthError, setIsAuthError] = useState(false);
+
   async function load() {
     setLoading(true);
     setErr(null);
+    setIsAuthError(false);
     try {
       const d = await getDashboard(mode);
       setData(d);
     } catch (e: any) {
-      setErr("You may need to sign in.");
+      const msg = e?.message ?? "Unknown error";
+      const is401 = msg.includes("401") || msg.includes("Unauthorized");
+      setIsAuthError(is401);
+      setErr(is401 ? "You need to sign in." : `Dashboard failed to load: ${msg}`);
       setData(null);
     } finally {
       setLoading(false);
@@ -66,15 +72,24 @@ export default function DashboardPage() {
           className="text-center"
         >
           <h1 className="text-3xl font-bold bg-gradient-to-r from-white to-zinc-400 bg-clip-text text-transparent">
-            Welcome to Tactix
+            {isAuthError ? "Welcome to Tactix" : "Something went wrong"}
           </h1>
-          <p className="mt-4 text-zinc-400">{err ?? "Loading your dashboard..."}</p>
-          <Link
-            href="/login"
-            className="mt-6 inline-block rounded-lg bg-gradient-to-r from-cyan-500 to-purple-600 px-6 py-3 font-medium text-white hover:opacity-90 transition-opacity"
-          >
-            Sign in to continue
-          </Link>
+          <p className="mt-4 text-zinc-400 max-w-lg mx-auto break-words">{err ?? "Loading your dashboard..."}</p>
+          {isAuthError ? (
+            <Link
+              href="/login"
+              className="mt-6 inline-block rounded-lg bg-gradient-to-r from-cyan-500 to-purple-600 px-6 py-3 font-medium text-white hover:opacity-90 transition-opacity"
+            >
+              Sign in to continue
+            </Link>
+          ) : (
+            <button
+              onClick={() => load()}
+              className="mt-6 inline-block rounded-lg bg-gradient-to-r from-cyan-500 to-purple-600 px-6 py-3 font-medium text-white hover:opacity-90 transition-opacity"
+            >
+              Retry
+            </button>
+          )}
         </motion.div>
       </div>
     );
