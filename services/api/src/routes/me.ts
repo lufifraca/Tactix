@@ -4,6 +4,7 @@ import { requireUser, type AuthedRequest } from "../auth/middleware";
 import { getLatestRank } from "../services/ingest/rankTracking";
 import { listObjects, getObject, putObject } from "../services/storage";
 import { fetchSteamLibrary } from "../services/ingest/steam/library";
+import { redis } from "../queue";
 
 export async function meRoutes(app: FastifyInstance) {
   app.get("/", async (req: AuthedRequest) => {
@@ -43,7 +44,34 @@ export async function meRoutes(app: FastifyInstance) {
     });
     const prefMap = new Map(preferences.map(p => [p.steamAppId, p]));
 
-    // Get Steam library games from S3
+    // Map raw Steam games to library items
+    function mapSteamGames(games: any[]) {
+      return games
+        .map((g: any) => {
+          const pref = prefMap.get(g.appid);
+          return {
+            id: `steam_${g.appid}`,
+            type: "steam_library" as const,
+            game: "STEAM",
+            appId: g.appid,
+            name: g.name,
+            playtimeMinutes: g.playtime_forever,
+            playtime2Weeks: g.playtime_2weeks || 0,
+            iconUrl: g.img_icon_url
+              ? `http://media.steampowered.com/steamcommunity/public/images/apps/${g.appid}/${g.img_icon_url}.jpg`
+              : undefined,
+            headerUrl: `https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/${g.appid}/header.jpg`,
+            isFavorite: pref?.isFavorite ?? false,
+            wantTracking: pref?.wantTracking ?? false,
+          };
+        })
+        .sort((a: any, b: any) => {
+          if (a.isFavorite !== b.isFavorite) return b.isFavorite ? 1 : -1;
+          return b.playtimeMinutes - a.playtimeMinutes;
+        });
+    }
+
+    // Get Steam library games from S3, fall back to Redis cache
     let steamLibraryGames: any[] = [];
     try {
       const keys = await listObjects(`raw/steam_library/${user.id}/`);
@@ -52,34 +80,24 @@ export async function meRoutes(app: FastifyInstance) {
         const json = await getObject(latest);
         if (json) {
           const raw = JSON.parse(json);
-          steamLibraryGames = (raw.games ?? [])
-            .map((g: any) => {
-              const pref = prefMap.get(g.appid);
-              return {
-                id: `steam_${g.appid}`,
-                type: "steam_library" as const,
-                game: "STEAM",
-                appId: g.appid,
-                name: g.name,
-                playtimeMinutes: g.playtime_forever,
-                playtime2Weeks: g.playtime_2weeks || 0,
-                iconUrl: g.img_icon_url
-                  ? `http://media.steampowered.com/steamcommunity/public/images/apps/${g.appid}/${g.img_icon_url}.jpg`
-                  : undefined,
-                headerUrl: `https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/${g.appid}/header.jpg`,
-                isFavorite: pref?.isFavorite ?? false,
-                wantTracking: pref?.wantTracking ?? false,
-              };
-            })
-            // Sort: favorites first, then by playtime
-            .sort((a: any, b: any) => {
-              if (a.isFavorite !== b.isFavorite) return b.isFavorite ? 1 : -1;
-              return b.playtimeMinutes - a.playtimeMinutes;
-            });
+          steamLibraryGames = mapSteamGames(raw.games ?? []);
         }
       }
     } catch (e) {
-      console.error("Failed to fetch Steam library:", e);
+      console.error("Failed to fetch Steam library from S3:", e);
+    }
+
+    // Redis fallback when S3 is empty/unavailable
+    if (steamLibraryGames.length === 0 && redis) {
+      try {
+        const cached = await redis.get(`steam_library:${user.id}`);
+        if (cached) {
+          const raw = JSON.parse(cached);
+          steamLibraryGames = mapSteamGames(raw.games ?? []);
+        }
+      } catch (e) {
+        console.error("Failed to fetch Steam library from Redis:", e);
+      }
     }
 
     // Build linked game accounts data
@@ -296,7 +314,16 @@ export async function meRoutes(app: FastifyInstance) {
       const key = `raw/steam_library/${user.id}/${Date.now()}.json`;
       await putObject({ key, body, contentType: "application/json", cacheControl: "private, max-age=0" });
 
-      console.log(`[Steam Library] Stored ${games.length} games to S3 for user ${user.id}`);
+      // Also cache in Redis (fallback when S3 is not configured)
+      if (redis) {
+        try {
+          await redis.set(`steam_library:${user.id}`, body, "EX", 86400 * 7); // 7-day TTL
+        } catch (e) {
+          console.error("[Steam Library] Redis cache write failed:", e);
+        }
+      }
+
+      console.log(`[Steam Library] Stored ${games.length} games for user ${user.id}`);
 
       return {
         ok: true,

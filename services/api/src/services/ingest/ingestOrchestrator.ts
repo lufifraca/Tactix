@@ -19,6 +19,15 @@ export async function ingestGameAccount(gameAccountId: string) {
       const key = `raw/steam_library/${account.userId}/${Date.now()}.json`;
 
       await putObject({ key, body, contentType: "application/json", cacheControl: "private, max-age=0" });
+
+      // Also cache in Redis (fallback when S3 is not configured)
+      try {
+        const { redis } = await import("../../queue");
+        if (redis) {
+          await redis.set(`steam_library:${account.userId}`, body, "EX", 86400 * 7);
+        }
+      } catch (_) { /* non-fatal */ }
+
       console.log(`Ingested Steam Lib for ${account.userId}: ${games.length} games`);
 
       // TODO: In Phase 3, we will sync these to a Game/GameAccount table.
