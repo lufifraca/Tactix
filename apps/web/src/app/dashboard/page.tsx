@@ -80,7 +80,7 @@ export default function DashboardPage() {
     );
   }
 
-  if (data.onboardingState !== "COMPLETE") {
+  if (data.onboardingState === "NEEDS_GAME_LINK") {
     return <OnboardingWizard onComplete={load} />;
   }
 
