@@ -22,6 +22,30 @@ function buildRedirectUrl(base: string, params: Record<string, string>) {
   return u.toString();
 }
 
+/**
+ * Redirect through the Vercel-hosted /auth/callback route so the session
+ * cookie is set on the frontend domain. This avoids the cookie being set
+ * on the Render domain (wrong origin) and eliminates dependence on the
+ * proxy forwarding Set-Cookie headers.
+ */
+function buildSessionRedirect(token: string, targetUrl: string): string {
+  // Mobile deep links bypass the cookie flow
+  if (targetUrl.startsWith(`${env.MOBILE_DEEPLINK_SCHEME}://`)) {
+    return buildRedirectUrl(targetUrl, { token });
+  }
+
+  // Web: redirect through /auth/callback on the frontend domain
+  const cb = new URL(`${env.WEB_BASE_URL}/auth/callback`);
+  cb.searchParams.set("token", token);
+  try {
+    const parsed = new URL(targetUrl);
+    cb.searchParams.set("redirect", parsed.pathname + parsed.search);
+  } catch {
+    cb.searchParams.set("redirect", "/dashboard");
+  }
+  return cb.toString();
+}
+
 async function upsertUserFromIdentity(opts: {
   provider: "GOOGLE" | "DISCORD";
   providerUserId: string;
@@ -156,13 +180,10 @@ export async function authRoutes(app: FastifyInstance) {
     });
 
     const sessionToken = signSessionToken(user.id);
-    setSessionCookie(reply, sessionToken);
+    setSessionCookie(reply, sessionToken); // fallback for direct backend access / dev
 
     const redirectTo = typeof st.r === "string" ? st.r : `${env.WEB_BASE_URL}/dashboard`;
-    if (redirectTo.startsWith(`${env.MOBILE_DEEPLINK_SCHEME}://`)) {
-      return reply.redirect(buildRedirectUrl(redirectTo, { token: sessionToken }));
-    }
-    return reply.redirect(redirectTo);
+    return reply.redirect(buildSessionRedirect(sessionToken, redirectTo));
   });
 
   // --- Discord ---
@@ -241,13 +262,10 @@ export async function authRoutes(app: FastifyInstance) {
     });
 
     const sessionToken = signSessionToken(user.id);
-    setSessionCookie(reply, sessionToken);
+    setSessionCookie(reply, sessionToken); // fallback for direct backend access / dev
 
     const redirectTo = typeof st.r === "string" ? st.r : `${env.WEB_BASE_URL}/dashboard`;
-    if (redirectTo.startsWith(`${env.MOBILE_DEEPLINK_SCHEME}://`)) {
-      return reply.redirect(buildRedirectUrl(redirectTo, { token: sessionToken }));
-    }
-    return reply.redirect(redirectTo);
+    return reply.redirect(buildSessionRedirect(sessionToken, redirectTo));
   });
 
   // --- Steam (linking only) ---

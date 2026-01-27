@@ -46,7 +46,12 @@ export default function SettingsPage() {
       setMe(m);
       const linked = await apiGet<{ accounts: LinkedAccount[] }>("/me/linked");
       setAccounts(linked.accounts);
-    } catch (e) {
+    } catch (e: any) {
+      const msg = e?.message ?? "";
+      if (msg.includes("401") || msg.includes("Unauthorized")) {
+        window.location.href = "/login";
+        return;
+      }
       console.error(e);
     } finally {
       setLoading(false);
