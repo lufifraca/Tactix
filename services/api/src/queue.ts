@@ -39,8 +39,10 @@ function probePort(host: string, port: number, timeoutMs = 1500): Promise<boolea
   }
 
   try {
+    const useTls = env.REDIS_URL.startsWith("rediss://");
     redis = new IORedis(env.REDIS_URL, {
       maxRetriesPerRequest: null,
+      ...(useTls ? { tls: {} } : {}),
     });
 
     redis.on("error", () => {

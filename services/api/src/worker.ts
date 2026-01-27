@@ -75,8 +75,10 @@ async function runWeeklyArcEndingSoon() {
 async function main() {
   console.log("Worker starting...");
 
+  const useTls = env.REDIS_URL.startsWith("rediss://");
   const redis = new IORedis(env.REDIS_URL, {
     maxRetriesPerRequest: null,
+    ...(useTls ? { tls: {} } : {}),
   });
 
   await new Promise<void>((resolve, reject) => {
