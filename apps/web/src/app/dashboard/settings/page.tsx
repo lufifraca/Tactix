@@ -435,12 +435,15 @@ export default function SettingsPage() {
           <div className="text-zinc-500">
             Signed in as <span className="text-zinc-300">{me?.email}</span>
           </div>
-          <a
-            href={`${process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:3001"}/auth/logout`}
+          <button
+            onClick={async () => {
+              await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:3001"}/auth/logout`, { credentials: "include" });
+              window.location.href = "/login";
+            }}
             className="text-red-400 hover:text-red-300 transition-colors"
           >
             Log out
-          </a>
+          </button>
         </div>
       </motion.footer>
     </div>

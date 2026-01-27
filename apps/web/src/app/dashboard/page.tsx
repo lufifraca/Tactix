@@ -880,12 +880,15 @@ export default function DashboardPage() {
           className="mt-12 border-t border-zinc-800/50 pt-6 text-sm text-zinc-500"
         >
           <div className="flex flex-wrap gap-4">
-            <a
-              href={`${process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:3001"}/auth/logout`}
+            <button
+              onClick={async () => {
+                await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:3001"}/auth/logout`, { credentials: "include" });
+                window.location.href = "/login";
+              }}
               className="hover:text-zinc-300 transition-colors"
             >
               Log out
-            </a>
+            </button>
             <a href={steamLinkUrl()} className="hover:text-zinc-300 transition-colors">
               Link Steam (CS2)
             </a>
