@@ -135,9 +135,11 @@ export async function ensureDailyQuests(userId: string, dateStr: string, questCo
     where: { userId, date },
     orderBy: { slot: "asc" },
   });
-  if (existing.length >= questCount) return;
 
-  // Wipe existing if wrong count (e.g., upgrade/downgrade mid-day)
+  // If already have the correct count, nothing to do
+  if (existing.length === questCount) return;
+
+  // Wipe existing if wrong count (e.g., upgrade/downgrade mid-day, or free user showing 3 quests)
   if (existing.length > 0) {
     await prisma.quest.deleteMany({ where: { userId, date } });
   }
