@@ -4,7 +4,7 @@ import { prisma } from "../../../prisma";
 import { putObject } from "../../storage";
 import { extractErrorMessage } from "../../../utils/http";
 import { sha256Hex } from "../../../utils/crypto";
-import { fetchMarvelMatchHistoryCommunity, fetchMarvelPlayerProfile } from "./community";
+import { fetchMarvelMatchHistoryWithRetry, fetchMarvelPlayerProfile } from "./community";
 import { fetchMarvelProfileTrackerNetwork } from "./trackerNetwork";
 import { normalizeMarvelMatchFromCommunity, normalizeMarvelMatchFromTRN } from "./normalize";
 import { saveRankSnapshot } from "../rankTracking";
@@ -67,11 +67,20 @@ export async function ingestMarvelRivalsAccount(account: GameAccount): Promise<{
   }
 
   if (matches.length === 0) {
-    const mh = await fetchMarvelMatchHistoryCommunity({ query: username, page: 1, limit: 40 });
-    matches = mh.match_history ?? [];
+    // Use retry logic: tries username first, then UID, then without filters
+    const accountMeta = account.meta as any;
+    const cachedUid = accountMeta?.playerUid ?? null;
+
+    const { matches: fetchedMatches, queryUsed } = await fetchMarvelMatchHistoryWithRetry({
+      username,
+      uid: cachedUid,
+      page: 1,
+      limit: 40,
+    });
+    matches = fetchedMatches;
     sourceUsed = "COMMUNITY";
 
-    const body = JSON.stringify(mh);
+    const body = JSON.stringify({ match_history: matches, queryUsed });
     const sha = sha256Hex(body);
     const rawKey = `raw/marvel_rivals/community/${account.userId}/${Date.now()}_${sha.slice(0, 10)}.json`;
     try {

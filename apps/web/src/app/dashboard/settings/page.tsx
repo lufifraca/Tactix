@@ -321,9 +321,16 @@ export default function SettingsPage() {
       {!accounts.some(a => a.game === "MARVEL_RIVALS") && (
         <AnimatedCard delay={0.3} className="p-6 mb-6">
           <SettingsSectionHeader title="Link Marvel Rivals" icon="🦸" />
-          <p className="text-sm text-zinc-500 mb-4">
-            Enter your Marvel Rivals username. Data via Tracker Network with community API fallback.
+          <p className="text-sm text-zinc-500 mb-3">
+            Enter your Marvel Rivals username exactly as it appears in-game.
           </p>
+          <div className="mb-4 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
+            <p className="text-xs text-amber-400">
+              <strong>Note:</strong> Marvel Rivals uses unofficial community APIs (no official API exists).
+              Match data may be delayed 24-48 hours and some matches may not appear.
+              Make sure your in-game profile is set to public.
+            </p>
+          </div>
           <div className="space-y-3">
             <div className="flex gap-2">
               <input
