@@ -2,6 +2,7 @@ import { prisma } from "../../../prisma";
 import type { GameAccount } from "@prisma/client";
 import { fetchClashRoyaleBattleLog, fetchBrawlStarsBattleLog, fetchClashRoyalePlayer, fetchBrawlStarsPlayer } from "./index";
 import { saveRankSnapshot } from "../rankTracking";
+import { extractErrorMessage } from "../../../utils/http";
 
 export async function ingestSupercellAccount(account: GameAccount) {
     let matches: any[] = [];
@@ -61,15 +62,20 @@ export async function ingestSupercellAccount(account: GameAccount) {
     }
 
     let inserted = 0;
+    let matchErrors = 0;
 
     // Process matches (Newest first usually, but we upsert by ID)
     for (const m of matches) {
+      try {
         // Generate a deterministic ID based on time + type
         const matchDate = new Date(m.battleTime.replace(/^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2}).*$/, '$1-$2-$3T$4:$5:$6.000Z'));
-        const matchId = `sc_${account.game}_${m.battleTime}_${account.externalId}`; // Basic ID, collisions rare for same user same second
+        const matchId = `sc_${account.game}_${m.battleTime}_${account.externalId}`;
 
-        // Check if exists
-        const exists = await prisma.match.findUnique({ where: { matchId } } as any);
+        // Check if exists (use findFirst since unique key is compound: game + matchId)
+        const exists = await prisma.match.findFirst({
+            where: { game: account.game as any, matchId },
+            select: { id: true },
+        });
         if (exists) continue;
 
         // Normalize
@@ -87,24 +93,20 @@ export async function ingestSupercellAccount(account: GameAccount) {
             else if (myCrowns < oppCrowns) result = "LOSS";
             else result = "DRAW";
 
-            // Proxy Stats for Universal Domains
             stats = {
                 crowns: myCrowns,
                 opponentCrowns: oppCrowns,
-                // Proxies for FPS-centric scoring:
-                kills: myCrowns * 5, // Crowns are "kills"
+                kills: myCrowns * 5,
                 deaths: oppCrowns * 5,
                 objectiveTimeSeconds: myCrowns > 0 ? 100 : 0,
-                damageDealt: (team.kingTowerHitPoints ? (1000 - team.kingTowerHitPoints) : 0) + (myCrowns * 1000), // very rough
+                damageDealt: (team.kingTowerHitPoints ? (1000 - team.kingTowerHitPoints) : 0) + (myCrowns * 1000),
             };
         } else {
-            // Brawl Stars normalization (basic)
             result = m.battle.result === "victory" ? "WIN" : "LOSS";
             stats = {
                 mode: m.battle.mode,
                 rank: m.battle.rank,
                 trophyChange: m.battle.trophyChange,
-                // Brawl stars doesn't expose K/D in battle log easily without advanced parsing
                 kills: m.battle.result === "victory" ? 10 : 2,
                 deaths: m.battle.result === "victory" ? 2 : 10,
             };
@@ -117,17 +119,24 @@ export async function ingestSupercellAccount(account: GameAccount) {
                 userId: account.userId,
                 gameAccountId: account.id,
                 game: account.game as any,
-                mode: "RANKED", // assume ranked for simplicity
+                mode: "RANKED",
                 startedAt: matchDate,
                 endedAt: new Date(matchDate.getTime() + duration * 1000),
                 durationSeconds: duration,
                 result: result as any,
                 normalizedStats: stats,
                 source: "SUPERCELL_API" as any,
-                ingestedAt: new Date(),
             }
         });
         inserted++;
+      } catch (matchErr: any) {
+        matchErrors++;
+        console.error(`[${account.game}] Failed to insert match:`, extractErrorMessage(matchErr));
+      }
+    }
+
+    if (matchErrors > 0) {
+        console.warn(`[${account.game}] ${matchErrors}/${matches.length} matches failed, ${inserted} succeeded`);
     }
 
     return { inserted };
