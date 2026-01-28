@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { apiGet, apiPatch, apiPost, getDashboard, steamLinkUrl } from "@/lib/api";
 import type { DashboardResponse } from "@tactix/shared";
@@ -148,14 +149,22 @@ export default function DashboardPage() {
         >
           <div>
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500 to-purple-600 flex items-center justify-center shadow-lg shadow-purple-500/20">
-                <span className="text-xl font-bold text-white">T</span>
-              </div>
+              <Image
+                src="/logo.png"
+                alt="Tactix"
+                width={48}
+                height={48}
+                className="rounded-xl shadow-lg shadow-purple-500/20"
+              />
               <div>
-                <h1 className="text-2xl font-bold bg-gradient-to-r from-white via-zinc-200 to-zinc-400 bg-clip-text text-transparent">
-                  Tactix
-                </h1>
-                <p className="text-xs text-zinc-500">Dashboard</p>
+                <Image
+                  src="/fonts/tactix_title.png"
+                  alt="Tactix"
+                  width={120}
+                  height={30}
+                  className="h-7 w-auto"
+                />
+                <p className="text-xs text-zinc-500 mt-0.5">Dashboard</p>
               </div>
             </div>
             <div className="mt-3 flex items-center gap-2 text-sm text-zinc-500">
