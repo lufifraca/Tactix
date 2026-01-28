@@ -180,34 +180,25 @@ export default function DashboardPage() {
             >
               {refreshing ? "Syncing..." : "Refresh stats"}
             </motion.button>
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={async () => {
-                const res = await apiPost<any>("/dashboard/debug/simulate-match");
-                alert(`Simulated a ${res.game} match with ${res.kills} kills.`);
-                await load();
-              }}
-              className="rounded-lg border border-zinc-700 bg-zinc-800/50 px-4 py-2 text-sm text-zinc-300 hover:bg-zinc-800 transition-colors"
-            >
-              + Sim Match
-            </motion.button>
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={async () => {
-                const res = await apiPost<any>("/dashboard/debug/toggle-pro");
-                alert(`Pro is now ${res.subscriptionActive ? "ON" : "OFF"}`);
-                await load();
-              }}
-              className={`rounded-lg border px-4 py-2 text-sm font-medium transition-colors ${
-                data.subscriptionActive
-                  ? 'border-amber-500/30 bg-amber-500/10 text-amber-400 hover:bg-amber-500/20'
-                  : 'border-zinc-700 bg-zinc-800/50 text-zinc-300 hover:bg-zinc-800'
-              }`}
-            >
-              {data.subscriptionActive ? 'Pro ON' : 'Enable Pro'}
-            </motion.button>
+            {/* Admin-only: Toggle Pro (only for owner account) */}
+            {data.me.email === "lficanolatimer@gmail.com" && (
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={async () => {
+                  const res = await apiPost<any>("/dashboard/debug/toggle-pro");
+                  alert(`Pro is now ${res.subscriptionActive ? "ON" : "OFF"}`);
+                  await load();
+                }}
+                className={`rounded-lg border px-4 py-2 text-sm font-medium transition-colors ${
+                  data.subscriptionActive
+                    ? 'border-amber-500/30 bg-amber-500/10 text-amber-400 hover:bg-amber-500/20'
+                    : 'border-zinc-700 bg-zinc-800/50 text-zinc-300 hover:bg-zinc-800'
+                }`}
+              >
+                {data.subscriptionActive ? 'Pro ON' : 'Enable Pro'}
+              </motion.button>
+            )}
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}

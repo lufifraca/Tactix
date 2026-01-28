@@ -541,60 +541,14 @@ export async function dashboardRoutes(app: FastifyInstance) {
     return { ok: true };
   });
 
-  app.post("/debug/simulate-match", async (req: AuthedRequest) => {
-    const user = await requireUser(req);
-    const games = ["CS2", "CLASH_ROYALE", "MARVEL_RIVALS"];
-    const game = games[Math.floor(Math.random() * games.length)];
-
-    // Create a dummy GameAccount if needed
-    let account = await prisma.gameAccount.findFirst({ where: { userId: user.id, game } });
-    if (!account) {
-      account = await prisma.gameAccount.create({
-        data: {
-          userId: user.id,
-          game,
-          provider: "DEBUG",
-          externalId: `debug_${Date.now()}`,
-          displayName: `Debug ${game} Account`,
-        }
-      });
-    }
-
-    // Insert a randomized match
-    const isWin = Math.random() > 0.5;
-    const kills = Math.floor(Math.random() * 30);
-    const deaths = Math.floor(Math.random() * 20);
-
-    await prisma.match.create({
-      data: {
-        userId: user.id,
-        gameAccountId: account.id,
-        game,
-        matchId: `debug_match_${Date.now()}`,
-        startedAt: new Date(),
-        endedAt: new Date(),
-        mode: "RANKED",
-        result: isWin ? "WIN" : "LOSS",
-        durationSeconds: 600 + Math.floor(Math.random() * 1200),
-        source: "DEBUG_SIMULATOR",
-        normalizedStats: {
-          kills,
-          deaths,
-          assists: Math.floor(Math.random() * 10),
-          headshots: Math.floor(Math.random() * kills),
-          damageDealt: kills * 100 + Math.floor(Math.random() * 500),
-          // Clash specific
-          crowns: game === "CLASH_ROYALE" ? Math.floor(Math.random() * 3) : undefined,
-        },
-      }
-    });
-
-    return { ok: true, game, kills, deaths };
-  });
-
-  // Dev: toggle Pro subscription for current user
+  // Admin-only: toggle Pro subscription (restricted to owner account)
   app.post("/debug/toggle-pro", async (req: AuthedRequest) => {
     const user = await requireUser(req);
+
+    // Only allow the app owner to toggle Pro for testing
+    if (user.email !== "lficanolatimer@gmail.com") {
+      return { ok: false, error: "Unauthorized. Please subscribe through the normal billing flow." };
+    }
     const existing = await prisma.subscription.findUnique({ where: { userId: user.id } });
 
     if (existing && existing.status === "ACTIVE") {
