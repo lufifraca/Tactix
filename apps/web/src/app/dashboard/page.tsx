@@ -148,23 +148,23 @@ export default function DashboardPage() {
           className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
         >
           <div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-4">
               <Image
                 src="/logo.png"
                 alt="Tactix"
-                width={48}
-                height={48}
+                width={56}
+                height={56}
                 className="rounded-xl shadow-lg shadow-purple-500/20"
               />
               <div>
                 <Image
                   src="/fonts/tactix_title.png"
                   alt="Tactix"
-                  width={120}
-                  height={30}
-                  className="h-7 w-auto"
+                  width={180}
+                  height={45}
+                  className="h-10 w-auto"
                 />
-                <p className="text-xs text-zinc-500 mt-0.5">Dashboard</p>
+                <p className="text-xs text-zinc-500 mt-1">Dashboard</p>
               </div>
             </div>
             <div className="mt-3 flex items-center gap-2 text-sm text-zinc-500">
