@@ -40,8 +40,16 @@ export async function ingestRoutes(app: FastifyInstance) {
     const checks: any[] = [];
 
     // Check env keys
+    let outboundIp = "(unknown)";
+    try {
+      const ipRes = await fetch("https://api.ipify.org?format=json", { signal: AbortSignal.timeout(5000) });
+      const ipData = await ipRes.json() as any;
+      outboundIp = ipData?.ip ?? "(unknown)";
+    } catch { /* non-fatal */ }
+
     checks.push({
       type: "env",
+      outboundIp,
       STEAM_WEB_API_KEY: !!env.STEAM_WEB_API_KEY,
       MARVEL_RIVALS_API_KEY: !!env.MARVEL_RIVALS_API_KEY,
       HENRIK_API_KEY: !!env.HENRIK_API_KEY,
