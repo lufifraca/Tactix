@@ -19,6 +19,50 @@ import { detectAndStoreSessions, getCurrentLossStreak } from "./sessionDetection
 const SIGNIFICANT_WIN_RATE_DROP = 0.15; // 15% drop is considered significant
 const MIN_SAMPLE_SIZE = 5; // Minimum matches to calculate meaningful win rate
 
+/**
+ * Gets the hour (0-23) in a specific timezone from a UTC Date.
+ * Falls back to UTC if timezone is invalid.
+ */
+function getHourInTimezone(date: Date, timezone: string | null): number {
+  if (!timezone) {
+    return date.getUTCHours();
+  }
+  try {
+    const formatter = new Intl.DateTimeFormat("en-US", {
+      timeZone: timezone,
+      hour: "numeric",
+      hour12: false,
+    });
+    const parts = formatter.formatToParts(date);
+    const hourPart = parts.find(p => p.type === "hour");
+    return hourPart ? parseInt(hourPart.value, 10) : date.getUTCHours();
+  } catch {
+    // Invalid timezone, fall back to UTC
+    return date.getUTCHours();
+  }
+}
+
+/**
+ * Gets the day of week (0-6, Sunday=0) in a specific timezone from a UTC Date.
+ * Falls back to UTC if timezone is invalid.
+ */
+function getDayInTimezone(date: Date, timezone: string | null): number {
+  if (!timezone) {
+    return date.getUTCDay();
+  }
+  try {
+    const formatter = new Intl.DateTimeFormat("en-US", {
+      timeZone: timezone,
+      weekday: "short",
+    });
+    const dayStr = formatter.format(date);
+    const dayMap: Record<string, number> = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
+    return dayMap[dayStr] ?? date.getUTCDay();
+  } catch {
+    return date.getUTCDay();
+  }
+}
+
 function createEmptyWinRateBucket(): WinRateBucket {
   return { wins: 0, total: 0, winRate: null };
 }
@@ -93,6 +137,13 @@ export async function computeSessionInsights(
   // Ensure sessions are detected and stored
   await detectAndStoreSessions(userId, game ?? undefined);
 
+  // Get user's timezone for accurate local time calculations
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { timezone: true },
+  });
+  const timezone = user?.timezone ?? null;
+
   // Get all matches for analysis
   const matches = await prisma.match.findMany({
     where: {
@@ -118,11 +169,11 @@ export async function computeSessionInsights(
     take: 50,
   });
 
-  // Time of day analysis
-  const timeOfDay = computeTimeOfDayPerformance(matches);
+  // Time of day analysis (using user's timezone for accurate local time bucketing)
+  const timeOfDay = computeTimeOfDayPerformance(matches, timezone);
 
-  // Day of week analysis
-  const dayOfWeek = computeDayOfWeekPerformance(matches);
+  // Day of week analysis (using user's timezone)
+  const dayOfWeek = computeDayOfWeekPerformance(matches, timezone);
 
   // Session length analysis
   const sessionLength = computeSessionLengthPerformance(sessions);
@@ -152,7 +203,7 @@ export async function computeSessionInsights(
   };
 }
 
-function computeTimeOfDayPerformance(matches: MatchWithTimestamp[]): TimeOfDayPerformance {
+function computeTimeOfDayPerformance(matches: MatchWithTimestamp[], timezone: string | null): TimeOfDayPerformance {
   const buckets: Record<TimeOfDayBucket, WinRateBucket> = {
     morning: createEmptyWinRateBucket(),
     afternoon: createEmptyWinRateBucket(),
@@ -164,7 +215,8 @@ function computeTimeOfDayPerformance(matches: MatchWithTimestamp[]): TimeOfDayPe
     const time = match.endedAt ?? match.startedAt;
     if (!time) continue;
 
-    const hour = time.getUTCHours();
+    // Convert UTC time to user's local timezone for accurate time-of-day bucketing
+    const hour = getHourInTimezone(time, timezone);
     const bucket = getTimeOfDayBucket(hour);
     const result = match.result.toUpperCase();
 
@@ -188,7 +240,7 @@ function computeTimeOfDayPerformance(matches: MatchWithTimestamp[]): TimeOfDayPe
   };
 }
 
-function computeDayOfWeekPerformance(matches: MatchWithTimestamp[]): DayOfWeekPerformance {
+function computeDayOfWeekPerformance(matches: MatchWithTimestamp[], timezone: string | null): DayOfWeekPerformance {
   const buckets: Record<DayOfWeek, WinRateBucket> = {
     monday: createEmptyWinRateBucket(),
     tuesday: createEmptyWinRateBucket(),
@@ -203,7 +255,10 @@ function computeDayOfWeekPerformance(matches: MatchWithTimestamp[]): DayOfWeekPe
     const time = match.endedAt ?? match.startedAt;
     if (!time) continue;
 
-    const day = getDayOfWeek(time);
+    // Convert UTC time to user's local timezone for accurate day-of-week bucketing
+    const dayIndex = getDayInTimezone(time, timezone);
+    const days: DayOfWeek[] = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
+    const day = days[dayIndex] as DayOfWeek;
     const result = match.result.toUpperCase();
 
     buckets[day].total++;
@@ -453,6 +508,13 @@ function sessionToSummary(session: any): SessionSummary {
  * This stores pre-computed analytics in the database for faster retrieval.
  */
 export async function updateSessionAnalytics(userId: string, game?: string | null): Promise<void> {
+  // Get user's timezone for accurate local time calculations
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { timezone: true },
+  });
+  const timezone = user?.timezone ?? null;
+
   const matches = await prisma.match.findMany({
     where: {
       userId,
@@ -469,9 +531,9 @@ export async function updateSessionAnalytics(userId: string, game?: string | nul
     where: { userId, ...(game ? { game } : {}) },
   });
 
-  // Compute all the analytics
-  const tod = computeTimeOfDayPerformance(matches as any);
-  const dow = computeDayOfWeekPerformance(matches as any);
+  // Compute all the analytics (using user's timezone)
+  const tod = computeTimeOfDayPerformance(matches as any, timezone);
+  const dow = computeDayOfWeekPerformance(matches as any, timezone);
   const slen = computeSessionLengthPerformance(sessions);
   const tilt = await computeTiltAnalysis(userId, matches as any, game ?? undefined);
   const optimal = computeOptimalSessionInfo(sessions, matches as any);

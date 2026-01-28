@@ -32,6 +32,7 @@ model User {
   email       String?  @unique
   displayName String?
   avatarUrl   String?
+  timezone    String?  // IANA timezone (e.g., "America/New_York"). Used for time-of-day analytics.
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 

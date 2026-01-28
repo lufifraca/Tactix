@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import { apiPost, getDashboard, steamLinkUrl } from "@/lib/api";
+import { apiGet, apiPatch, apiPost, getDashboard, steamLinkUrl } from "@/lib/api";
 import type { DashboardResponse } from "@tactix/shared";
 import { gameColors, gameLabels, domainLabels } from "@/lib/gameTheme";
 import { AnimatedCard } from "@/components/AnimatedCard";
@@ -49,6 +49,25 @@ export default function DashboardPage() {
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mode]);
+
+  // Auto-detect and set timezone if not already configured (for accurate time-of-day analytics)
+  useEffect(() => {
+    async function syncTimezone() {
+      try {
+        const me = await apiGet<{ timezone?: string | null }>("/me");
+        if (!me?.timezone) {
+          const detectedTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+          if (detectedTz) {
+            await apiPatch("/me/timezone", { timezone: detectedTz });
+            console.log("[Tactix] Auto-detected timezone:", detectedTz);
+          }
+        }
+      } catch {
+        // Non-fatal: timezone sync failure shouldn't block the dashboard
+      }
+    }
+    syncTimezone();
+  }, []);
 
   async function refresh() {
     setRefreshing(true);

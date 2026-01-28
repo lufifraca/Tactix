@@ -15,8 +15,37 @@ export async function meRoutes(app: FastifyInstance) {
       email: user.email,
       displayName: user.displayName,
       avatarUrl: user.avatarUrl,
+      timezone: user.timezone,
       subscriptionActive: subscription?.status === "ACTIVE",
     };
+  });
+
+  /**
+   * PATCH /me/timezone
+   * Update the user's timezone preference (IANA format like "America/New_York")
+   * This is used for accurate time-of-day analytics (e.g., "best time to play")
+   */
+  app.patch("/timezone", async (req: AuthedRequest) => {
+    const user = await requireUser(req);
+    const body = req.body as { timezone?: string };
+
+    if (!body.timezone) {
+      return { ok: false, error: "timezone is required" };
+    }
+
+    // Validate timezone is a valid IANA timezone
+    try {
+      new Intl.DateTimeFormat("en-US", { timeZone: body.timezone });
+    } catch {
+      return { ok: false, error: "Invalid timezone. Please use IANA format (e.g., America/New_York)" };
+    }
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { timezone: body.timezone },
+    });
+
+    return { ok: true, timezone: body.timezone };
   });
 
   app.get("/linked", async (req: AuthedRequest) => {

@@ -23,6 +23,17 @@ export async function apiPost<T>(path: string, body?: any): Promise<T> {
   return (await res.json()) as T;
 }
 
+export async function apiPatch<T>(path: string, body?: any): Promise<T> {
+  const res = await fetch(`${API_BASE}${path}`, {
+    method: "PATCH",
+    credentials: "include",
+    headers: { "content-type": "application/json" },
+    body: body ? JSON.stringify(body) : "{}",
+  });
+  if (!res.ok) throw new Error(await res.text());
+  return (await res.json()) as T;
+}
+
 export async function getDashboard(mode: "ALL" | "RANKED" | "UNRANKED" = "ALL") {
   return apiGet<DashboardResponse>(`/dashboard?mode=${mode}`);
 }
