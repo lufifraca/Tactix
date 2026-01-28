@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
+import Image from "next/image";
 import { apiGet, authUrl } from "@/lib/api";
 
 export default function LoginPage() {
@@ -40,19 +41,38 @@ export default function LoginPage() {
           transition={{ duration: 0.6 }}
           className="text-center mb-10"
         >
-          {/* Logo/Brand */}
+          {/* Logo */}
           <motion.div
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ delay: 0.1, duration: 0.5 }}
-            className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-gradient-to-br from-cyan-500 to-purple-600 mb-6 shadow-2xl shadow-purple-500/30"
+            className="mb-6"
           >
-            <span className="text-4xl font-bold text-white">T</span>
+            <Image
+              src="/logo.png"
+              alt="Tactix Logo"
+              width={80}
+              height={80}
+              className="mx-auto drop-shadow-2xl"
+              priority
+            />
           </motion.div>
 
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-white via-zinc-200 to-zinc-400 bg-clip-text text-transparent">
-            Welcome to Tactix
-          </h1>
+          {/* Title */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2, duration: 0.5 }}
+          >
+            <Image
+              src="/fonts/tactix_title.png"
+              alt="Tactix"
+              width={280}
+              height={70}
+              className="mx-auto"
+              priority
+            />
+          </motion.div>
           <p className="mt-3 text-zinc-400 text-lg">
             Your cross-game coaching companion
           </p>

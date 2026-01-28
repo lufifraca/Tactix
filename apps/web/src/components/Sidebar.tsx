@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSidebar } from "./SidebarContext";
@@ -58,14 +59,18 @@ export function Sidebar() {
   const nav = (
     <nav className="flex flex-col h-full">
       {/* Logo */}
-      <div className="px-5 py-6 flex items-center gap-3">
-        <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-cyan-500 to-purple-600 flex items-center justify-center shadow-lg shadow-purple-500/20">
-          <span className="text-lg font-bold text-white">T</span>
-        </div>
+      <Link href="/dashboard" className="px-5 py-6 flex items-center gap-3 hover:opacity-90 transition-opacity">
+        <Image
+          src="/logo.png"
+          alt="Tactix"
+          width={36}
+          height={36}
+          className="rounded-xl shadow-lg shadow-purple-500/20"
+        />
         <span className="text-lg font-semibold bg-gradient-to-r from-white to-zinc-400 bg-clip-text text-transparent">
           Tactix
         </span>
-      </div>
+      </Link>
 
       {/* Nav items */}
       <div className="flex-1 px-3 space-y-1">
