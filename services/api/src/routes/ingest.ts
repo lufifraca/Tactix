@@ -54,6 +54,8 @@ export async function ingestRoutes(app: FastifyInstance) {
       MARVEL_RIVALS_API_KEY: !!env.MARVEL_RIVALS_API_KEY,
       HENRIK_API_KEY: !!env.HENRIK_API_KEY,
       TRN_API_KEY: !!env.TRN_API_KEY,
+      CLASH_ROYALE_API_TOKEN: !!env.CLASH_ROYALE_API_TOKEN,
+      BRAWL_STARS_API_TOKEN: !!env.BRAWL_STARS_API_TOKEN,
       S3_CONFIGURED: !!(env.S3_ENDPOINT && env.S3_ACCESS_KEY_ID && env.S3_SECRET_ACCESS_KEY),
       S3_ENDPOINT: env.S3_ENDPOINT ? env.S3_ENDPOINT.replace(/\/\/.*@/, "//***@") : "(not set)",
     });
@@ -85,6 +87,13 @@ export async function ingestRoutes(app: FastifyInstance) {
             diag.status = "skip";
             diag.detail = `Cannot parse name#tag from displayName: ${a.displayName}`;
           }
+        } else if (a.game === "CLASH_ROYALE" || a.game === "BRAWL_STARS") {
+          const { fetchClashRoyaleBattleLog, fetchBrawlStarsBattleLog } = await import("../services/ingest/supercell/index");
+          const battles = a.game === "CLASH_ROYALE"
+            ? await fetchClashRoyaleBattleLog(a.externalId)
+            : await fetchBrawlStarsBattleLog(a.externalId).then(r => r.items ?? []);
+          diag.status = "ok";
+          diag.detail = `Supercell API returned ${battles.length} battles (provider: ${a.provider})`;
         } else {
           diag.status = "skip";
           diag.detail = "No diagnostic for this game";

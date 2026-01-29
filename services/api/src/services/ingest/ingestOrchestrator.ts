@@ -48,9 +48,11 @@ export async function ingestGameAccount(gameAccountId: string) {
     return { ok: true, inserted: res.inserted, game: "MARVEL_RIVALS", sourceUsed: res.sourceUsed };
   }
 
-  if ((account.provider as any) === "SUPERCELL") {
+  if ((account.provider as any) === "SUPERCELL" || account.game === "CLASH_ROYALE" || account.game === "BRAWL_STARS") {
+    console.log(`[Ingest] Processing Supercell account: ${account.game}/${account.provider}/${account.displayName}`);
     const { ingestSupercellAccount } = await import("./supercell/ingest");
     const res = await ingestSupercellAccount(account);
+    console.log(`[Ingest] Supercell result for ${account.game}: inserted=${res.inserted}`);
     return { ok: true, inserted: res.inserted, game: account.game };
   }
 

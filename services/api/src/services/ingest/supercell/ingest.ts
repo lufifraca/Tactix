@@ -56,9 +56,11 @@ export async function ingestSupercellAccount(account: GameAccount) {
     // Fetch raw logs
     if ((account.game as any) === "CLASH_ROYALE") {
         matches = await fetchClashRoyaleBattleLog(account.externalId);
+        console.log(`[Supercell] Clash Royale API returned ${matches.length} battles for ${account.displayName}`);
     } else if ((account.game as any) === "BRAWL_STARS") {
         const res = await fetchBrawlStarsBattleLog(account.externalId);
         matches = res.items ?? [];
+        console.log(`[Supercell] Brawl Stars API returned ${matches.length} battles for ${account.displayName}`);
     }
 
     let inserted = 0;
@@ -134,6 +136,9 @@ export async function ingestSupercellAccount(account: GameAccount) {
         console.error(`[${account.game}] Failed to insert match:`, extractErrorMessage(matchErr));
       }
     }
+
+    const skipped = matches.length - inserted - matchErrors;
+    console.log(`[Supercell] ${account.game} ingest complete: ${inserted} inserted, ${skipped} already exist, ${matchErrors} errors`);
 
     if (matchErrors > 0) {
         console.warn(`[${account.game}] ${matchErrors}/${matches.length} matches failed, ${inserted} succeeded`);
