@@ -787,7 +787,7 @@ export default function DashboardPage() {
               {data.streaksAndMilestones.gameStreaks
                 .filter((gs: any) => gs.currentStreak >= 2)
                 .map((gs: any, i: number) => {
-                  const colors = gameColors[gs.game] || gameColors.CS2;
+                  const colors = gameColors[gs.game] || gameColors.MARVEL_RIVALS;
                   const isWin = gs.streakType === "WIN";
                   return (
                     <AnimatedCard
@@ -821,7 +821,7 @@ export default function DashboardPage() {
               {data.streaksAndMilestones.milestones
                 .filter((m: any) => m.type !== 'win_streak') // win streaks shown above
                 .map((m: any, i: number) => {
-                  const colors = m.game ? (gameColors[m.game] || gameColors.CS2) : null;
+                  const colors = m.game ? (gameColors[m.game] || gameColors.MARVEL_RIVALS) : null;
                   return (
                     <AnimatedCard
                       key={`${m.type}-${m.game || 'all'}`}

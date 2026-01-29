@@ -11,10 +11,10 @@ type Step = "welcome" | "link" | "syncing" | "done";
 const GAMES = [
   {
     key: "STEAM",
-    label: "Counter-Strike 2",
-    color: "#f59e0b",
+    label: "Steam Library",
+    color: "#1b2838",
     type: "steam" as const,
-    desc: "Link via Steam sign-in",
+    desc: "Import your Steam games",
   },
   {
     key: "MARVEL_RIVALS",

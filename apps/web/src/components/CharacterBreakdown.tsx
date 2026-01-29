@@ -75,7 +75,7 @@ export function CharacterBreakdown() {
         <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
           <AnimatePresence mode="popLayout">
             {characters.slice(0, 12).map((char, i) => {
-              const colors = gameColors[char.game] || gameColors.CS2;
+              const colors = gameColors[char.game] || gameColors.MARVEL_RIVALS;
               return (
                 <motion.div
                   key={`${char.game}-${char.character}`}

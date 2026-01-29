@@ -28,7 +28,6 @@ const gameIcons: Record<string, { emoji: string; hasLogo?: boolean }> = {
   VALORANT: { emoji: "🎯" },
   CLASH_ROYALE: { emoji: "🏰" },
   BRAWL_STARS: { emoji: "💥" },
-  CS2: { emoji: "🔫" },
 };
 
 export function TrackedGameCard({ game, displayName, provider, rank, delay = 0 }: TrackedGameCardProps) {
@@ -42,7 +41,7 @@ export function TrackedGameCard({ game, displayName, provider, rank, delay = 0 }
     }
   }, [game, rank?.rankNumeric]);
 
-  const colors = gameColors[game] || gameColors.CS2;
+  const colors = gameColors[game] || gameColors.MARVEL_RIVALS;
   const icon = gameIcons[game] || { emoji: "🎮" };
 
   return (

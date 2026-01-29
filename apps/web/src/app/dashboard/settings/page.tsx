@@ -8,7 +8,7 @@ import { AnimatedCard } from "@/components/AnimatedCard";
 
 type LinkedAccount = {
   id: string;
-  game: "CS2" | "MARVEL_RIVALS" | "CLASH_ROYALE" | "BRAWL_STARS" | "VALORANT";
+  game: "MARVEL_RIVALS" | "CLASH_ROYALE" | "BRAWL_STARS" | "VALORANT";
   provider: string;
   externalId: string;
   displayName: string;
@@ -230,7 +230,7 @@ export default function SettingsPage() {
         ) : (
           <div className="space-y-3">
             {accounts.map((a, i) => {
-              const colors = gameColors[a.game] || gameColors.CS2;
+              const colors = gameColors[a.game] || gameColors.MARVEL_RIVALS;
               return (
                 <motion.div
                   key={a.id}

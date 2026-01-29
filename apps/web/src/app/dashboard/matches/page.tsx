@@ -98,7 +98,7 @@ export default function MatchHistoryPage() {
     const s = match.stats;
     if (!s) return "";
 
-    if (match.game === "VALORANT" || match.game === "CS2" || match.game === "MARVEL_RIVALS") {
+    if (match.game === "VALORANT" || match.game === "MARVEL_RIVALS") {
       const parts: string[] = [];
       if (s.kills != null) parts.push(`${s.kills}/${s.deaths ?? 0}/${s.assists ?? 0}`);
       if (s.damage != null) parts.push(`${s.damage} DMG`);
@@ -156,9 +156,8 @@ export default function MatchHistoryPage() {
             className="rounded-lg bg-zinc-900 border border-zinc-700 px-3 py-2 text-sm text-zinc-300 focus:outline-none focus:border-zinc-500"
           >
             <option value="ALL">All Games</option>
-            <option value="VALORANT">Valorant</option>
-            <option value="CS2">CS2</option>
             <option value="MARVEL_RIVALS">Marvel Rivals</option>
+            <option value="VALORANT">Valorant</option>
             <option value="CLASH_ROYALE">Clash Royale</option>
             <option value="BRAWL_STARS">Brawl Stars</option>
           </select>

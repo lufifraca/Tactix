@@ -1,11 +1,4 @@
 export const gameColors: Record<string, { primary: string; glow: string; gradient: string; bg: string; border: string }> = {
-  CS2: {
-    primary: "#f59e0b",
-    glow: "shadow-amber-500/20",
-    gradient: "from-amber-500/20 to-orange-600/10",
-    bg: "bg-amber-500/10",
-    border: "border-amber-500/30",
-  },
   MARVEL_RIVALS: {
     primary: "#a855f7",
     glow: "shadow-purple-500/20",
@@ -37,7 +30,6 @@ export const gameColors: Record<string, { primary: string; glow: string; gradien
 };
 
 export const gameLabels: Record<string, string> = {
-  CS2: "Counter-Strike 2",
   MARVEL_RIVALS: "Marvel Rivals",
   CLASH_ROYALE: "Clash Royale",
   BRAWL_STARS: "Brawl Stars",
@@ -45,7 +37,6 @@ export const gameLabels: Record<string, string> = {
 };
 
 export const gameShortLabels: Record<string, string> = {
-  CS2: "CS2",
   MARVEL_RIVALS: "Marvel Rivals",
   CLASH_ROYALE: "Clash Royale",
   BRAWL_STARS: "Brawl Stars",

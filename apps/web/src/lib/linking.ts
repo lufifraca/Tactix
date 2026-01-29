@@ -23,10 +23,3 @@ export async function linkSupercell(game: string, tag: string) {
     tag,
   });
 }
-
-export async function linkCs2Extras(steamGameAuthCode: string, knownMatchCode?: string) {
-  return apiPost("/link/cs2", {
-    steamGameAuthCode,
-    knownMatchCode: knownMatchCode || undefined,
-  });
-}

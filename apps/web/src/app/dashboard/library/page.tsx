@@ -15,15 +15,6 @@ const gameConfig: Record<string, {
   icon: string;
   emoji: string;
 }> = {
-  CS2: {
-    name: "Counter-Strike 2",
-    color: "#f59e0b",
-    gradient: "from-amber-600 via-orange-600 to-yellow-500",
-    glow: "shadow-amber-500/30",
-    coverImage: "https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/730/header.jpg",
-    icon: "https://cdn.cloudflare.steamstatic.com/steamcommunity/public/images/apps/730/69f7ebe2735c366c65c0b33dae00e12dc40edbe4.jpg",
-    emoji: "🔫",
-  },
   MARVEL_RIVALS: {
     name: "Marvel Rivals",
     color: "#a855f7",

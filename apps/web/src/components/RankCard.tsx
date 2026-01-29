@@ -26,7 +26,7 @@ export function RankCard({ rank, delay = 0 }: { rank: RankData; delay?: number }
       .catch(() => {}); // Fail silently
   }, [rank.game]);
 
-  const colors = gameColors[rank.game] || gameColors.CS2;
+  const colors = gameColors[rank.game] || gameColors.MARVEL_RIVALS;
 
   return (
     <AnimatedCard

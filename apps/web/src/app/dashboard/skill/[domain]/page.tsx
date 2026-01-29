@@ -243,7 +243,7 @@ export default function SkillDetailPage() {
           <div className="space-y-3">
             {data.matches && data.matches.length > 0 ? (
               data.matches.map((m: any, i: number) => {
-                const colors = gameColors[m.game] || gameColors.CS2;
+                const colors = gameColors[m.game] || gameColors.MARVEL_RIVALS;
                 return (
                   <motion.div
                     key={m.id}
