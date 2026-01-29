@@ -211,7 +211,9 @@ export default function GameLibraryPage() {
     }
   }
 
-  const totalGames = linkedGames.length + steamLibrary.length;
+  // Filter out CS2 from tracked games count (CS2 only shows in Steam library)
+  const trackedGamesCount = linkedGames.filter(g => g.game !== "CS2").length;
+  const totalGames = trackedGamesCount + steamLibrary.length;
 
   if (loading) return <LoadingSkeleton />;
 
@@ -240,8 +242,8 @@ export default function GameLibraryPage() {
           </h1>
           <p className="text-sm text-zinc-500 mt-1">
             {totalGames} {totalGames === 1 ? 'game' : 'games'} total
-            {linkedGames.length > 0 && steamLibrary.length > 0 && (
-              <span className="text-zinc-600"> ({linkedGames.length} tracked, {steamLibrary.length} Steam)</span>
+            {trackedGamesCount > 0 && steamLibrary.length > 0 && (
+              <span className="text-zinc-600"> ({trackedGamesCount} tracked, {steamLibrary.length} Steam)</span>
             )}
           </p>
         </div>
@@ -325,16 +327,16 @@ export default function GameLibraryPage() {
         ) : (
           <div className="space-y-8">
             {/* Tracked Games Section */}
-            {linkedGames.length > 0 && (
+            {trackedGamesCount > 0 && (
               <div>
                 <div className="flex items-center gap-3 mb-4">
                   <div className="h-0.5 w-6 bg-gradient-to-r from-cyan-400 to-purple-500 rounded-full" />
                   <h2 className="text-sm font-medium uppercase tracking-wider text-zinc-400">
-                    Tracked Games ({linkedGames.length})
+                    Tracked Games ({trackedGamesCount})
                   </h2>
                 </div>
                 <div className="space-y-6">
-                  {linkedGames.map((game, index) => {
+                  {linkedGames.filter(g => g.game !== "CS2").map((game, index) => {
                     const config = gameConfig[game.game] || {
                       name: game.game,
                       color: "#888",

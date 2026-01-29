@@ -54,8 +54,8 @@ export async function enhanceQuestMetadata(
     try {
         const parsed = JSON.parse(raw.replace(/```json/g, "").replace(/```/g, ""));
         return {
-            title: parsed.title?.slice(0, 40) ?? baseTitle,
-            description: parsed.description?.slice(0, 100) ?? baseDescription,
+            title: parsed.title?.slice(0, 60) ?? baseTitle,
+            description: parsed.description?.slice(0, 150) ?? baseDescription,
         };
     } catch {
         return { title: baseTitle, description: baseDescription };
