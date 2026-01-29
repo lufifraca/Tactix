@@ -47,7 +47,7 @@ const gameConfig: Record<string, {
     color: "#ff4655",
     gradient: "from-red-600 via-rose-600 to-pink-500",
     glow: "shadow-red-500/30",
-    coverImage: "https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/438100/header.jpg",
+    coverImage: "",
     icon: "https://cdn.trackercdn.com/cdn/tracker.gg/valorant/icons/tiersv2/0.png",
     emoji: "🎯",
   },

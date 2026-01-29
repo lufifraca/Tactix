@@ -222,7 +222,11 @@ export default function MatchHistoryPage() {
                     exit={{ opacity: 0, y: -10 }}
                     transition={{ delay: i * 0.02 }}
                     onClick={() => setExpandedMatch(expanded ? null : match.id)}
-                    className={`rounded-xl border ${gc.border} ${gc.bg} backdrop-blur-sm cursor-pointer transition-all hover:border-opacity-60`}
+                    className={`rounded-xl border backdrop-blur-sm cursor-pointer transition-all hover:border-opacity-60 ${
+                      match.result === "WIN" ? "border-emerald-500/30 bg-emerald-500/10" :
+                      match.result === "LOSS" ? "border-red-500/30 bg-red-500/10" :
+                      "border-zinc-500/30 bg-zinc-500/10"
+                    }`}
                   >
                     {/* Main row */}
                     <div className="flex items-center gap-4 px-4 py-3">
