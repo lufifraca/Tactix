@@ -266,8 +266,8 @@ export default function MatchHistoryPage() {
                         </div>
                       </div>
 
-                      {/* KDA badge */}
-                      {kda && (
+                      {/* KDA badge - only for games with real K/D (not Clash Royale) */}
+                      {kda && match.game !== "CLASH_ROYALE" && (
                         <div className="hidden sm:block shrink-0 text-right">
                           <span className={`text-sm font-mono font-semibold ${
                             parseFloat(kda) >= 2 ? "text-emerald-400" :
@@ -310,13 +310,14 @@ export default function MatchHistoryPage() {
                         >
                           <div className="px-4 pb-4 pt-1 border-t border-zinc-800/50">
                             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-2">
-                              {match.stats.kills != null && (
+                              {/* K/D/A - only for games with real combat stats (not Clash Royale) */}
+                              {match.stats.kills != null && match.game !== "CLASH_ROYALE" && (
                                 <StatBox label="Kills" value={match.stats.kills} />
                               )}
-                              {match.stats.deaths != null && (
+                              {match.stats.deaths != null && match.game !== "CLASH_ROYALE" && (
                                 <StatBox label="Deaths" value={match.stats.deaths} />
                               )}
-                              {match.stats.assists != null && (
+                              {match.stats.assists != null && match.game !== "CLASH_ROYALE" && (
                                 <StatBox label="Assists" value={match.stats.assists} />
                               )}
                               {match.stats.score != null && (
@@ -345,6 +346,12 @@ export default function MatchHistoryPage() {
                               )}
                               {match.stats.crowns != null && (
                                 <StatBox label="Crowns" value={match.stats.crowns} />
+                              )}
+                              {match.stats.opponentCrowns != null && (
+                                <StatBox label="Opp Crowns" value={match.stats.opponentCrowns} />
+                              )}
+                              {match.stats.towerDamage != null && (
+                                <StatBox label="Tower DMG" value={match.stats.towerDamage} />
                               )}
                               {match.stats.trophyChange != null && (
                                 <StatBox label="Trophies" value={`${match.stats.trophyChange > 0 ? "+" : ""}${match.stats.trophyChange}`} />
