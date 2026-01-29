@@ -2,6 +2,7 @@
 
 import { SidebarProvider } from "@/components/SidebarContext";
 import { Sidebar } from "@/components/Sidebar";
+import { MobileHeader } from "@/components/MobileHeader";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -17,6 +18,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
         {/* Main content */}
         <div className="lg:ml-56 relative">
+          <MobileHeader />
           {children}
         </div>
       </div>
