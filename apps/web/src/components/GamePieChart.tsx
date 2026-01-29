@@ -5,7 +5,7 @@ import { gameColors, gameLabels } from "@/lib/gameTheme";
 
 export function GamePieChart({ counts }: { counts: Record<string, number> | undefined }) {
   if (!counts) return null;
-  // Filter out CS2 from the pie chart
+  // skip cs2
   const entries = Object.entries(counts).filter(([game]) => game !== "CS2").sort((a, b) => b[1] - a[1]);
   if (entries.length === 0) return null;
 

@@ -211,7 +211,7 @@ export default function GameLibraryPage() {
     }
   }
 
-  // Filter out CS2 from tracked games count (CS2 only shows in Steam library)
+  // cs2 only shows in steam library
   const trackedGamesCount = linkedGames.filter(g => g.game !== "CS2").length;
   const totalGames = trackedGamesCount + steamLibrary.length;
 

@@ -266,7 +266,7 @@ export default function MatchHistoryPage() {
                         </div>
                       </div>
 
-                      {/* KDA badge - only for games with real K/D (not Clash Royale) */}
+                      {/* KDA badge (not for clash royale) */}
                       {kda && match.game !== "CLASH_ROYALE" && (
                         <div className="hidden sm:block shrink-0 text-right">
                           <span className={`text-sm font-mono font-semibold ${
@@ -310,7 +310,7 @@ export default function MatchHistoryPage() {
                         >
                           <div className="px-4 pb-4 pt-1 border-t border-zinc-800/50">
                             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-2">
-                              {/* K/D/A - only for games with real combat stats (not Clash Royale) */}
+                              {/* kda (skip for clash royale) */}
                               {match.stats.kills != null && match.game !== "CLASH_ROYALE" && (
                                 <StatBox label="Kills" value={match.stats.kills} />
                               )}

@@ -98,7 +98,6 @@ export async function ingestSupercellAccount(account: GameAccount) {
             stats = {
                 crowns: myCrowns,
                 opponentCrowns: oppCrowns,
-                // Note: Clash Royale doesn't have kills/deaths - only crown-based scoring
                 objectiveTimeSeconds: myCrowns > 0 ? 100 : 0,
                 towerDamage: team.kingTowerHitPoints ? (1000 - team.kingTowerHitPoints) : 0,
             };
