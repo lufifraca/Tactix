@@ -33,8 +33,8 @@ export async function billingRoutes(app: FastifyInstance) {
       customer: customerId,
       line_items: [{ price: env.STRIPE_PRICE_ID_MONTHLY, quantity: 1 }],
       allow_promotion_codes: false,
-      success_url: `${env.WEB_BASE_URL}/settings?billing=success`,
-      cancel_url: `${env.WEB_BASE_URL}/settings?billing=cancel`,
+      success_url: `${env.WEB_BASE_URL}/dashboard/settings?billing=success`,
+      cancel_url: `${env.WEB_BASE_URL}/dashboard/settings?billing=cancel`,
     });
 
     return { url: session.url };
@@ -49,7 +49,7 @@ export async function billingRoutes(app: FastifyInstance) {
 
     const portal = await stripe.billingPortal.sessions.create({
       customer: sub.stripeCustomerId,
-      return_url: `${env.WEB_BASE_URL}/settings`,
+      return_url: `${env.WEB_BASE_URL}/dashboard/settings`,
     });
 
     return { url: portal.url };

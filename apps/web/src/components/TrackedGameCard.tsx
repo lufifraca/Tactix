@@ -26,8 +26,8 @@ interface TrackedGameCardProps {
 const gameIcons: Record<string, { emoji: string; hasLogo?: boolean }> = {
   MARVEL_RIVALS: { emoji: "🦸" },
   VALORANT: { emoji: "🎯" },
-  CLASH_ROYALE: { emoji: "👑" },
-  BRAWL_STARS: { emoji: "⭐" },
+  CLASH_ROYALE: { emoji: "🏰" },
+  BRAWL_STARS: { emoji: "💥" },
   CS2: { emoji: "🔫" },
 };
 

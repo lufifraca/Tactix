@@ -126,8 +126,22 @@ export default function SettingsPage() {
   }
 
   async function upgrade() {
-    const r = await apiPost<{ url: string }>("/billing/checkout");
-    window.location.href = r.url;
+    // Use external payment link if configured, otherwise use API checkout
+    const externalPaymentUrl = process.env.NEXT_PUBLIC_STRIPE_PAYMENT_URL;
+    if (externalPaymentUrl) {
+      window.location.href = externalPaymentUrl;
+      return;
+    }
+    try {
+      const r = await apiPost<{ url: string }>("/billing/checkout");
+      if (r.url) {
+        window.location.href = r.url;
+      } else {
+        showMessage("Billing not configured. Please contact support.", "error");
+      }
+    } catch (e: any) {
+      showMessage(e.message || "Failed to start checkout", "error");
+    }
   }
 
   async function manageBilling() {

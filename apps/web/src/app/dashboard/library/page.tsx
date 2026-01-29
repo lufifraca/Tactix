@@ -13,6 +13,7 @@ const gameConfig: Record<string, {
   glow: string;
   coverImage: string;
   icon: string;
+  emoji: string;
 }> = {
   CS2: {
     name: "Counter-Strike 2",
@@ -21,6 +22,7 @@ const gameConfig: Record<string, {
     glow: "shadow-amber-500/30",
     coverImage: "https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/730/header.jpg",
     icon: "https://cdn.cloudflare.steamstatic.com/steamcommunity/public/images/apps/730/69f7ebe2735c366c65c0b33dae00e12dc40edbe4.jpg",
+    emoji: "🔫",
   },
   MARVEL_RIVALS: {
     name: "Marvel Rivals",
@@ -29,6 +31,7 @@ const gameConfig: Record<string, {
     glow: "shadow-purple-500/30",
     coverImage: "https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/2767030/header.jpg",
     icon: "/marvel-rivals-icon.png",
+    emoji: "🦸",
   },
   CLASH_ROYALE: {
     name: "Clash Royale",
@@ -36,7 +39,8 @@ const gameConfig: Record<string, {
     gradient: "from-blue-600 via-cyan-600 to-sky-500",
     glow: "shadow-blue-500/30",
     coverImage: "https://play-lh.googleusercontent.com/rIvZQ_H3hfmexC8vurmLczLtMNBFtxCg6JA8eMqk3k4FLHdLHTfQH1vqY4qSCFZCTQ=w526-h296-rw",
-    icon: "https://play-lh.googleusercontent.com/1-1E5S0MkJfTq4n7HsXY5TN35X7YV1Y1_qmT56g5SjZBG_xSqf_CUB1RoR6d3S7r4f4=w240-h480-rw",
+    icon: "",
+    emoji: "🏰",
   },
   BRAWL_STARS: {
     name: "Brawl Stars",
@@ -44,7 +48,8 @@ const gameConfig: Record<string, {
     gradient: "from-green-600 via-emerald-600 to-lime-500",
     glow: "shadow-green-500/30",
     coverImage: "https://play-lh.googleusercontent.com/GHqzO8JdLJ6KIDC8k3ZXWvjwEqhNlROsR2MmgJbDTt6YVuS0e6EZB7LdthKV7CiV8A=w526-h296-rw",
-    icon: "https://play-lh.googleusercontent.com/GHqzO8JdLJ6KIDC8k3ZXWvjwEqhNlROsR2MmgJbDTt6YVuS0e6EZB7LdthKV7CiV8A=s180-rw",
+    icon: "",
+    emoji: "💥",
   },
   VALORANT: {
     name: "Valorant",
@@ -53,6 +58,7 @@ const gameConfig: Record<string, {
     glow: "shadow-red-500/30",
     coverImage: "https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/438100/header.jpg",
     icon: "https://cdn.trackercdn.com/cdn/tracker.gg/valorant/icons/tiersv2/0.png",
+    emoji: "🎯",
   },
 };
 
@@ -345,6 +351,7 @@ export default function GameLibraryPage() {
                       glow: "shadow-zinc-500/20",
                       coverImage: "",
                       icon: "",
+                      emoji: "🎮",
                     };
 
                     // Filter out null/undefined stats and format them
@@ -394,8 +401,8 @@ export default function GameLibraryPage() {
                                     className="w-12 h-12 rounded-lg"
                                   />
                                 ) : (
-                                  <span className="text-2xl font-bold" style={{ color: config.color }}>
-                                    {config.name.charAt(0)}
+                                  <span className="text-3xl">
+                                    {config.emoji}
                                   </span>
                                 )}
                               </div>
