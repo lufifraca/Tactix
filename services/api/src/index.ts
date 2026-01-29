@@ -10,6 +10,7 @@ import cors from "@fastify/cors";
 import cookie from "@fastify/cookie";
 import formbody from "@fastify/formbody";
 import rawBody from "fastify-raw-body";
+import rateLimit from "@fastify/rate-limit";
 import { env } from "./env";
 import { authPlugin } from "./auth/middleware";
 
@@ -60,6 +61,17 @@ await app.register(rawBody, {
 });
 
 await app.register(authPlugin);
+
+// Rate limiting - prevents abuse
+await app.register(rateLimit, {
+  max: 100, // 100 requests per minute globally
+  timeWindow: "1 minute",
+  keyGenerator: (req) => {
+    // Use user ID if authenticated, otherwise IP
+    const userId = (req as any).userId;
+    return userId || req.ip;
+  },
+});
 
 // Routes
 await app.register(healthRoutes);

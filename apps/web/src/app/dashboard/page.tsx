@@ -1,15 +1,15 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
-import { apiGet, apiPatch, apiPost, getDashboard, steamLinkUrl } from "@/lib/api";
+import { apiGet, apiPatch, apiPost, getDashboard } from "@/lib/api";
 import type { DashboardResponse } from "@tactix/shared";
 import { gameColors, gameLabels, domainLabels } from "@/lib/gameTheme";
 import { AnimatedCard } from "@/components/AnimatedCard";
 import { AnimatedNumber } from "@/components/AnimatedNumber";
-import { RankCard } from "@/components/RankCard";
+import { TrackedGameCard } from "@/components/TrackedGameCard";
 import { AnimatedProgressBar } from "@/components/AnimatedProgressBar";
 import { GamePieChart } from "@/components/GamePieChart";
 import { SectionHeader } from "@/components/SectionHeader";
@@ -69,6 +69,24 @@ export default function DashboardPage() {
     }
     syncTimezone();
   }, []);
+
+  // Auto-refresh stats on load if data is stale (>5 min old) or never ingested
+  const hasAutoRefreshed = useRef(false);
+  useEffect(() => {
+    if (!data || refreshing || hasAutoRefreshed.current) return;
+
+    const lastIngest = data.lastIngestAt ? new Date(data.lastIngestAt).getTime() : 0;
+    const fiveMinutesAgo = Date.now() - 5 * 60 * 1000;
+    const isStale = lastIngest < fiveMinutesAgo;
+
+    // Only auto-refresh if stale and user has linked accounts
+    if (isStale && data.linkedAccounts && data.linkedAccounts.length > 0) {
+      hasAutoRefreshed.current = true;
+      console.log("[Tactix] Auto-refreshing stats (last ingest:", data.lastIngestAt || "never", ")");
+      refresh();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data?.lastIngestAt, data?.linkedAccounts?.length]);
 
   async function refresh() {
     setRefreshing(true);
@@ -871,14 +889,23 @@ export default function DashboardPage() {
           </div>
         </section>
 
-        {/* Current Ranks */}
-        {data.ranks && Object.keys(data.ranks).length > 0 && (
+        {/* Tracked Games */}
+        {data.linkedAccounts && data.linkedAccounts.filter(a => a.game !== "CS2").length > 0 && (
           <section className="mt-8">
-            <SectionHeader title="Current Ranks" />
+            <SectionHeader title="Tracked Games" subtitle={`${data.linkedAccounts.filter(a => a.game !== "CS2").length} linked`} />
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              {Object.values(data.ranks).map((rank: any, i) => (
-                <RankCard key={rank.game} rank={rank} delay={0.1 + i * 0.05} />
-              ))}
+              {data.linkedAccounts
+                .filter(a => a.game !== "CS2")
+                .map((account, i) => (
+                  <TrackedGameCard
+                    key={account.id}
+                    game={account.game}
+                    displayName={account.displayName}
+                    provider={account.provider}
+                    rank={data.ranks?.[account.game] || null}
+                    delay={0.1 + i * 0.05}
+                  />
+                ))}
             </div>
           </section>
         )}
@@ -952,11 +979,8 @@ export default function DashboardPage() {
             >
               Log out
             </button>
-            <a href={steamLinkUrl()} className="hover:text-zinc-300 transition-colors">
-              Link Steam (CS2)
-            </a>
             <Link href="/dashboard/settings" className="hover:text-zinc-300 transition-colors">
-              Link Supercell
+              Link Games
             </Link>
           </div>
           <div className="mt-4 text-xs text-zinc-600">

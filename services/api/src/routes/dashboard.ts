@@ -354,8 +354,21 @@ export async function dashboardRoutes(app: FastifyInstance) {
       console.error("Streaks/milestones fetch failed:", e);
     }
 
+    // Linked accounts for "Tracked Games" display
+    const linkedAccounts = await prisma.gameAccount.findMany({
+      where: { userId: user.id },
+      select: {
+        id: true,
+        game: true,
+        displayName: true,
+        provider: true,
+        linkedAt: true,
+      },
+      orderBy: { linkedAt: "desc" },
+    });
+
     // Onboarding state
-    const linkedAccountCount = await prisma.gameAccount.count({ where: { userId: user.id } });
+    const linkedAccountCount = linkedAccounts.length;
     const matchCount = await prisma.match.count({ where: { userId: user.id }, take: 1 });
     const onboardingState = linkedAccountCount === 0
       ? "NEEDS_GAME_LINK" as const
@@ -395,6 +408,13 @@ export async function dashboardRoutes(app: FastifyInstance) {
       lastIngestAt: lastIngest?.ingestedAt?.toISOString() ?? null,
       library,
       ranks,
+      linkedAccounts: linkedAccounts.map(a => ({
+        id: a.id,
+        game: a.game,
+        displayName: a.displayName,
+        provider: a.provider,
+        linkedAt: a.linkedAt.toISOString(),
+      })),
       sessionInsights,
       tiltAlert,
       todayPerformance,

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { motion } from "framer-motion";
 import Image from "next/image";
 import { apiGet, authUrl } from "@/lib/api";
@@ -120,8 +121,10 @@ export default function LoginPage() {
 
           <div className="mt-6 pt-6 border-t border-zinc-800">
             <p className="text-xs text-zinc-500 text-center leading-relaxed">
-              Steam linking is available after sign-in for CS2 stat tracking.
-              By continuing, you agree to basic data processing for match stats.
+              By continuing, you agree to our{" "}
+              <Link href="/terms" className="text-zinc-400 hover:text-white underline">Terms of Service</Link>
+              {" "}and{" "}
+              <Link href="/privacy" className="text-zinc-400 hover:text-white underline">Privacy Policy</Link>.
             </p>
           </div>
         </motion.div>
@@ -161,8 +164,8 @@ export default function LoginPage() {
           <p className="text-xs text-zinc-600 mb-3">Supported Games</p>
           <div className="flex justify-center gap-6">
             {[
-              { name: "CS2", color: "#f59e0b" },
               { name: "Marvel Rivals", color: "#a855f7" },
+              { name: "Valorant", color: "#ff4654" },
               { name: "Clash Royale", color: "#3b82f6" },
               { name: "Brawl Stars", color: "#22c55e" },
             ].map((game, i) => (

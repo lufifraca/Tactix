@@ -29,8 +29,6 @@ function SettingsSectionHeader({ title, icon }: { title: string; icon: string })
 export default function SettingsPage() {
   const [me, setMe] = useState<any>(null);
   const [accounts, setAccounts] = useState<LinkedAccount[]>([]);
-  const [cs2Auth, setCs2Auth] = useState("");
-  const [cs2Known, setCs2Known] = useState("");
   const [mrUser, setMrUser] = useState("");
   const [mrPlatform, setMrPlatform] = useState("pc");
   const [scGame, setScGame] = useState("CLASH_ROYALE");
@@ -65,15 +63,6 @@ export default function SettingsPage() {
   function showMessage(text: string, type: "success" | "error" = "success") {
     setMsg({ text, type });
     setTimeout(() => setMsg(null), 4000);
-  }
-
-  async function linkCs2Extras() {
-    try {
-      await apiPost("/link/cs2", { steamGameAuthCode: cs2Auth, knownMatchCode: cs2Known || undefined });
-      showMessage("CS2 auth code saved successfully!", "success");
-    } catch (e: any) {
-      showMessage(e.message || "Failed to save", "error");
-    }
   }
 
   async function linkMarvel() {
@@ -214,7 +203,7 @@ export default function SettingsPage() {
                 : "bg-gradient-to-r from-cyan-500 to-purple-600 text-white shadow-lg shadow-purple-500/20"
             }`}
           >
-            {me?.subscriptionActive ? "Manage Billing" : "Upgrade to Pro ($7.99/mo)"}
+            {me?.subscriptionActive ? "Manage Billing" : "Upgrade to Pro ($4.99/mo)"}
           </motion.button>
         </div>
       </AnimatedCard>
@@ -269,7 +258,7 @@ export default function SettingsPage() {
         <AnimatedCard delay={0.2} className="p-6 mb-6">
           <SettingsSectionHeader title="Link Steam" icon="🎮" />
           <p className="text-sm text-zinc-400 mb-4">
-            Steam sign-in links your SteamID for CS2 stats. Required for Counter-Strike 2 tracking.
+            Connect your Steam account to import your game library for tracking.
           </p>
           <motion.a
             href={steamLinkUrl()}
@@ -285,37 +274,6 @@ export default function SettingsPage() {
         </AnimatedCard>
       )}
 
-      {/* CS2 Auth Code */}
-      {accounts.some(a => a.game === "CS2" && a.provider === "STEAM") && (
-        <AnimatedCard delay={0.25} className="p-6 mb-6">
-          <SettingsSectionHeader title="CS2 Game Auth Code" icon="🔑" />
-          <p className="text-sm text-zinc-500 mb-4">
-            Optional: If you have a Game Authentication Code, save it for future match-level parsing.
-          </p>
-          <div className="space-y-3">
-            <input
-              value={cs2Auth}
-              onChange={(e) => setCs2Auth(e.target.value)}
-              placeholder="Game auth code (steamidkey)"
-              className="w-full rounded-lg bg-zinc-950 border border-zinc-800 px-4 py-3 text-sm text-white placeholder-zinc-600 focus:border-zinc-600 focus:outline-none transition-colors"
-            />
-            <input
-              value={cs2Known}
-              onChange={(e) => setCs2Known(e.target.value)}
-              placeholder="Known match share code (optional)"
-              className="w-full rounded-lg bg-zinc-950 border border-zinc-800 px-4 py-3 text-sm text-white placeholder-zinc-600 focus:border-zinc-600 focus:outline-none transition-colors"
-            />
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={linkCs2Extras}
-              className="px-4 py-2 rounded-lg border border-zinc-700 text-zinc-300 text-sm hover:bg-zinc-800 transition-colors"
-            >
-              Save CS2 Codes
-            </motion.button>
-          </div>
-        </AnimatedCard>
-      )}
 
       {/* Link Marvel Rivals */}
       {!accounts.some(a => a.game === "MARVEL_RIVALS") && (

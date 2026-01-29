@@ -327,6 +327,15 @@ export type CharacterBreakdownResponse = z.infer<typeof CharacterBreakdownRespon
 export const OnboardingState = z.enum(["NEEDS_GAME_LINK", "NEEDS_FIRST_INGEST", "COMPLETE"]);
 export type OnboardingState = z.infer<typeof OnboardingState>;
 
+export const LinkedAccount = z.object({
+  id: z.string(),
+  game: z.string(),
+  displayName: z.string().nullable(),
+  provider: z.string(),
+  linkedAt: z.string().datetime(),
+});
+export type LinkedAccount = z.infer<typeof LinkedAccount>;
+
 export const DashboardResponse = z.object({
   me: UserPublic,
   subscriptionActive: z.boolean(),
@@ -343,6 +352,7 @@ export const DashboardResponse = z.object({
     iconUrl: z.string().optional(),
   })).optional(),
   ranks: z.record(z.string(), RankSnapshot).optional(),
+  linkedAccounts: z.array(LinkedAccount).optional(),
   sessionInsights: SessionInsights.optional(),
   tiltAlert: TiltAlert.optional(),
   todayPerformance: TodayPerformance.optional(),
