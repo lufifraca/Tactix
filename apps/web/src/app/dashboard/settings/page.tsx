@@ -194,7 +194,7 @@ export default function SettingsPage() {
       {/* Subscription */}
       <AnimatedCard delay={0.1} className="p-6 mb-6">
         <SettingsSectionHeader title="Subscription" icon="💎" />
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium ${
               me?.subscriptionActive
@@ -304,12 +304,12 @@ export default function SettingsPage() {
             </p>
           </div>
           <div className="space-y-3">
-            <div className="flex gap-2">
+            <div className="flex flex-col sm:flex-row gap-2">
               <input
                 value={mrUser}
                 onChange={(e) => setMrUser(e.target.value)}
                 placeholder="Username"
-                className="flex-1 rounded-lg bg-zinc-950 border border-zinc-800 px-4 py-3 text-sm text-white placeholder-zinc-600 focus:border-zinc-600 focus:outline-none transition-colors"
+                className="flex-1 min-w-0 rounded-lg bg-zinc-950 border border-zinc-800 px-4 py-3 text-sm text-white placeholder-zinc-600 focus:border-zinc-600 focus:outline-none transition-colors"
               />
               <select
                 value={mrPlatform}
@@ -341,12 +341,12 @@ export default function SettingsPage() {
             Enter your Riot ID to connect your Valorant account. Format: Name#Tag (e.g., Player#NA1)
           </p>
           <div className="space-y-3">
-            <div className="flex gap-2">
+            <div className="flex flex-col sm:flex-row gap-2">
               <input
                 value={valRiotId}
                 onChange={(e) => setValRiotId(e.target.value)}
                 placeholder="Riot ID (Name#Tag)"
-                className="flex-1 rounded-lg bg-zinc-950 border border-zinc-800 px-4 py-3 text-sm text-white placeholder-zinc-600 focus:border-zinc-600 focus:outline-none transition-colors"
+                className="flex-1 min-w-0 rounded-lg bg-zinc-950 border border-zinc-800 px-4 py-3 text-sm text-white placeholder-zinc-600 focus:border-zinc-600 focus:outline-none transition-colors"
               />
               <select
                 value={valRegion}
@@ -377,7 +377,7 @@ export default function SettingsPage() {
           Connect your Clash Royale or Brawl Stars account using your Player Tag.
         </p>
         <div className="space-y-3">
-          <div className="flex gap-2">
+          <div className="flex flex-col sm:flex-row gap-2">
             <select
               value={scGame}
               onChange={(e) => setScGame(e.target.value)}
@@ -390,7 +390,7 @@ export default function SettingsPage() {
               value={scTag}
               onChange={(e) => setScTag(e.target.value)}
               placeholder="Player Tag (#ABC123)"
-              className="flex-1 rounded-lg bg-zinc-950 border border-zinc-800 px-4 py-3 text-sm text-white placeholder-zinc-600 focus:border-zinc-600 focus:outline-none transition-colors"
+              className="flex-1 min-w-0 rounded-lg bg-zinc-950 border border-zinc-800 px-4 py-3 text-sm text-white placeholder-zinc-600 focus:border-zinc-600 focus:outline-none transition-colors"
             />
           </div>
           <motion.button

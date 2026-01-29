@@ -162,7 +162,7 @@ export default function LoginPage() {
           className="mt-8 text-center"
         >
           <p className="text-xs text-zinc-600 mb-3">Supported Games</p>
-          <div className="flex justify-center gap-6">
+          <div className="flex flex-wrap justify-center gap-3 sm:gap-6">
             {[
               { name: "Marvel Rivals", color: "#a855f7" },
               { name: "Valorant", color: "#ff4654" },

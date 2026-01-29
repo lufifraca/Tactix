@@ -213,13 +213,13 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                   className="overflow-hidden"
                 >
                   <div className="rounded-xl border border-zinc-800/50 bg-zinc-900/50 p-5">
-                    <div className="flex gap-3">
+                    <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
                       <input
                         value={inputValue}
                         onChange={(e) => setInputValue(e.target.value)}
                         onKeyDown={(e) => e.key === "Enter" && handleLink()}
                         placeholder={GAMES.find((g) => g.key === selectedGame)?.placeholder || ""}
-                        className="flex-1 rounded-lg bg-zinc-950 border border-zinc-800 px-4 py-3 text-sm text-white placeholder-zinc-600 focus:border-zinc-600 focus:outline-none transition-colors"
+                        className="flex-1 min-w-0 rounded-lg bg-zinc-950 border border-zinc-800 px-4 py-3 text-sm text-white placeholder-zinc-600 focus:border-zinc-600 focus:outline-none transition-colors"
                         autoFocus
                       />
                       <motion.button

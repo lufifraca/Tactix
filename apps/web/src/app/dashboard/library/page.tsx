@@ -241,10 +241,10 @@ export default function GameLibraryPage() {
       <motion.header
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="flex items-center justify-between mb-8"
+        className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8"
       >
         <div>
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-white via-zinc-200 to-zinc-400 bg-clip-text text-transparent">
+          <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-white via-zinc-200 to-zinc-400 bg-clip-text text-transparent">
             Game Library
           </h1>
           <p className="text-sm text-zinc-500 mt-1">
@@ -447,17 +447,17 @@ export default function GameLibraryPage() {
                           </div>
 
                           {/* Stats Grid */}
-                          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+                          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 sm:gap-3">
                             {displayStats.map(([key, value]) => (
                               <motion.div
                                 key={key}
                                 whileHover={{ scale: 1.02 }}
-                                className="p-3 rounded-lg bg-zinc-800/30 border border-zinc-700/30 hover:bg-zinc-800/50 transition-colors"
+                                className="p-2 sm:p-3 rounded-lg bg-zinc-800/30 border border-zinc-700/30 hover:bg-zinc-800/50 transition-colors min-w-0"
                               >
-                                <div className="text-xs text-zinc-500 uppercase tracking-wider">
+                                <div className="text-xs text-zinc-500 uppercase tracking-wider truncate">
                                   {statLabels[key] || key.replace(/([A-Z])/g, ' $1').trim()}
                                 </div>
-                                <div className="mt-1 text-lg font-semibold text-white">
+                                <div className="mt-1 text-base sm:text-lg font-semibold text-white truncate">
                                   {key === 'winRate' || key === 'accuracy' ? `${value}%` :
                                    key === 'avgMatchDuration' ? `${value}m` :
                                    typeof value === 'number' ? value.toLocaleString() :
@@ -530,19 +530,19 @@ export default function GameLibraryPage() {
                         <div className="absolute inset-0 bg-gradient-to-t from-zinc-900 to-transparent" />
 
                         {/* Action Buttons */}
-                        <div className="absolute top-2 right-2 flex gap-1">
+                        <div className="absolute top-2 right-2 flex gap-1.5">
                           <motion.button
                             whileHover={{ scale: 1.1 }}
                             whileTap={{ scale: 0.9 }}
                             onClick={(e) => { e.stopPropagation(); togglePreference(game, 'isFavorite'); }}
-                            className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${
+                            className={`w-10 h-10 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center transition-colors ${
                               game.isFavorite
                                 ? 'bg-amber-500/90 text-white'
                                 : 'bg-zinc-900/70 text-zinc-400 hover:text-amber-400 hover:bg-zinc-800/90'
                             }`}
                             title={game.isFavorite ? 'Remove from favorites' : 'Add to favorites'}
                           >
-                            <svg className="w-4 h-4" fill={game.isFavorite ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
+                            <svg className="w-5 h-5 sm:w-4 sm:h-4" fill={game.isFavorite ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
                             </svg>
                           </motion.button>
@@ -550,14 +550,14 @@ export default function GameLibraryPage() {
                             whileHover={{ scale: 1.1 }}
                             whileTap={{ scale: 0.9 }}
                             onClick={(e) => { e.stopPropagation(); togglePreference(game, 'wantTracking'); }}
-                            className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${
+                            className={`w-10 h-10 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center transition-colors ${
                               game.wantTracking
                                 ? 'bg-purple-500/90 text-white'
                                 : 'bg-zinc-900/70 text-zinc-400 hover:text-purple-400 hover:bg-zinc-800/90'
                             }`}
                             title={game.wantTracking ? 'Remove tracking request' : 'Request stat tracking'}
                           >
-                            <svg className="w-4 h-4" fill={game.wantTracking ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
+                            <svg className="w-5 h-5 sm:w-4 sm:h-4" fill={game.wantTracking ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                             </svg>
                           </motion.button>

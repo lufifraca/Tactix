@@ -1,137 +1,202 @@
-# tactix v1 — Cross-Game Tactical FPS Quest + Rewards Platform
+# Tactix
 
-This repo is a **full v1 implementation** of the spec you provided:
-- **Games**: CS2 + Marvel Rivals
-- **Daily coach dashboard** with **verifiable-stat quests** and **cross-game skill domains**
-- **Private-by-default rewards** (badge + share card), deterministic SVG → PNG rendering
-- **Subscription** via Stripe ($7.99/mo) (optional in local dev)
-- **Background polling** every 30 minutes via a worker process (BullMQ + Redis)
+A cross-game analytics and coaching platform that helps competitive gamers track performance, identify patterns, and improve through data-driven insights.
 
-> UI is intentionally minimal. Everything is wired end-to-end and designed to be iterated.
+![Next.js](https://img.shields.io/badge/Next.js-14-black?logo=next.js)
+![Fastify](https://img.shields.io/badge/Fastify-4-white?logo=fastify)
+![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?logo=typescript)
+![Prisma](https://img.shields.io/badge/Prisma-5-2D3748?logo=prisma)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind-3-38B2AC?logo=tailwindcss)
 
----
+## Features
 
-## Monorepo layout
+### Multi-Game Support
+- **Marvel Rivals** - Hero shooter stats via community APIs
+- **Valorant** - Agent stats via Henrik API
+- **Clash Royale** - Trophy/battle stats via Supercell API
+- **Brawl Stars** - Brawler stats via Supercell API
+- **Steam Library** - Import and track your full game library
 
-- `packages/shared` — shared TypeScript schemas/types (Zod) used by API + web + mobile
-- `services/api` — Fastify API + Prisma/Postgres + BullMQ/Redis + S3 storage + rewards rendering
-- `apps/web` — Next.js web app (coach dashboard)
-- `apps/mobile` — Expo React Native app (minimal)
+### Analytics Dashboard
+- **Today's Performance** - Real-time win rate, K/D/A, and time played
+- **Session Intelligence** - Best time of day, optimal session length, tilt detection
+- **Skill Domains** - Cross-game metrics (Mechanics, Aggression, Vitality, etc.)
+- **Character Breakdown** - Per-hero/agent performance stats
+- **Rank Tracking** - Historical rank progression with sparkline charts
 
----
+### Gamification
+- **Daily Quests** - Verifiable stat-based challenges (1 free, 3 for Pro)
+- **Streaks & Milestones** - Track win streaks and achievement progress
+- **Shareable Rewards** - Badge + share card generation for completed quests
 
-## Local dev quickstart
+### Infrastructure
+- **Real-time Sync** - Manual refresh + auto-refresh on stale data
+- **Background Polling** - Scheduled stat ingestion via BullMQ
+- **Subscription System** - Stripe integration for Pro tier ($4.99/mo)
+- **Error Monitoring** - Sentry integration for production
 
-### 1) Start infra (Postgres + Redis + MinIO)
+## Tech Stack
+
+| Layer | Technology |
+|-------|------------|
+| Frontend | Next.js 14, React 18, Tailwind CSS, Framer Motion |
+| Backend | Fastify, Prisma ORM, PostgreSQL |
+| Queue | BullMQ, Redis (Upstash) |
+| Storage | S3-compatible (MinIO local, Tigris production) |
+| Auth | Google OAuth, Steam OpenID |
+| Payments | Stripe Checkout + Customer Portal |
+| Monitoring | Sentry |
+| Deployment | Vercel (web), Render (API), Neon (DB) |
+
+## Architecture
+
+```
+tactix/
+├── apps/
+│   ├── web/                 # Next.js dashboard
+│   └── mobile/              # Expo React Native (minimal)
+├── services/
+│   └── api/                 # Fastify API + Prisma + BullMQ worker
+├── packages/
+│   └── shared/              # Shared Zod schemas and types
+├── docker-compose.yml       # Local Postgres + Redis + MinIO
+└── render.yaml              # Render deployment config
+```
+
+## Local Development
+
+### Prerequisites
+- Node.js 20+
+- pnpm 8+
+- Docker (for local infrastructure)
+
+### 1. Start Infrastructure
 
 ```bash
 pnpm docker:up
 ```
 
-MinIO console: http://localhost:9001  
-MinIO credentials: `minio / minio_password`
+This starts:
+- PostgreSQL (port 5432)
+- Redis (port 6379)
+- MinIO S3 (port 9000, console 9001)
 
-### 2) Install deps
+### 2. Install Dependencies
 
 ```bash
 pnpm install
 ```
 
-### 3) Configure env
+### 3. Configure Environment
 
-Copy `.env.example` → `.env` at repo root and fill required values.
+```bash
+cp .env.example .env
+```
 
-Minimum for local testing (no OAuth):
-- `JWT_SECRET`
-- `DATABASE_URL`
-- `REDIS_URL`
-- `S3_*`
+**Required variables:**
+- `JWT_SECRET` - Any secure random string
+- `DATABASE_URL` - Postgres connection string
+- `REDIS_URL` - Redis connection string
+- `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` - For OAuth
 
-For real auth:
-- Google OAuth + Discord OAuth
-- Steam OpenID (Steam doesn't require client secret)
-- `STEAM_WEB_API_KEY` for CS2 cumulative stats
+**Game API keys (optional for testing):**
+- `SUPERCELL_API_KEY` - For Clash Royale / Brawl Stars
+- `HENRIK_API_KEY` - For Valorant
+- `STEAM_WEB_API_KEY` - For Steam library import
 
-Marvel Rivals match history:
-- `MARVEL_RIVALS_API_BASE` + `MARVEL_RIVALS_API_KEY` (community API)
-- Optional `TRN_API_KEY` if you have Tracker Network access
-
-### 4) Run migrations
+### 4. Run Database Migrations
 
 ```bash
 pnpm --filter @tactix/api db:generate
 pnpm --filter @tactix/api db:migrate
 ```
 
-### 5) Run API + Worker
+### 5. Start Development Servers
 
-Terminal A (API):
+**Terminal 1 - API:**
 ```bash
 pnpm --filter @tactix/api dev
 ```
 
-Terminal B (Worker / polling):
+**Terminal 2 - Worker (optional):**
 ```bash
 pnpm --filter @tactix/api worker:dev
 ```
 
-API health: http://localhost:3001/health
-
-### 6) Run web
-
+**Terminal 3 - Web:**
 ```bash
 pnpm --filter @tactix/web dev
 ```
 
-Web: http://localhost:3000
+- Web: http://localhost:3000
+- API: http://localhost:3001
+- API Health: http://localhost:3001/health
 
----
+## Deployment
 
-## How v1 handles ingestion
+### Vercel (Frontend)
+1. Connect GitHub repo to Vercel
+2. Set root directory to `apps/web`
+3. Add environment variables:
+   - `NEXT_PUBLIC_API_BASE_URL`
+   - `NEXT_PUBLIC_SENTRY_DSN`
+   - `NEXT_PUBLIC_STRIPE_PAYMENT_URL` (optional)
 
-### Marvel Rivals
-- **Primary:** Tracker Network (if available via `TRN_API_KEY`)
-- **Fallback:** Community API (`MARVEL_RIVALS_API_BASE`, default points to `marvelrivalsapi.com`)
+### Render (Backend)
+1. Use `render.yaml` for infrastructure-as-code
+2. Or manually create:
+   - Web Service for API (`services/api`)
+   - Background Worker for polling
+3. Add all API environment variables
 
-The ingest logic:
-- Fetches **match history**
-- Normalizes each match into canonical stats
-- Stores match rows + raw payload snapshots (S3)
+### Database
+- **Neon** recommended for serverless Postgres
+- Run migrations: `pnpm --filter @tactix/api db:migrate`
 
-### CS2
-CS2 match-level APIs are not reliably available without additional infrastructure.
-So **v1 ingests deterministic cumulative stats** via Steam Web API:
-- Fetch cumulative stats from `ISteamUserStats/GetUserStatsForGame` (appid 730)
-- Store as `StatSnapshot`
-- Compute a **delta** vs the previous snapshot and store it as a synthetic "match-like" row
-  - This makes daily quest scoring deterministic and reprocessable.
+## API Endpoints
 
-You can later swap the CS2 ingest module to true match-level parsing (share codes + GC) without changing the quest/skill system.
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/health` | Health check |
+| GET | `/me` | Current user info |
+| GET | `/me/library` | Game library with stats |
+| GET | `/dashboard` | Full dashboard data |
+| POST | `/ingest/refresh` | Trigger stat sync |
+| POST | `/link/marvel` | Link Marvel Rivals account |
+| POST | `/link/valorant` | Link Valorant account |
+| POST | `/link/supercell` | Link Clash Royale / Brawl Stars |
+| GET | `/quests` | Daily quests |
+| POST | `/billing/checkout` | Stripe checkout session |
+| POST | `/webhooks/stripe` | Stripe webhook handler |
 
----
+## Environment Variables
 
-## Determinism / Trust
+See `.env.example` for the full list. Key variables:
 
-- Quest completion is computed **purely from stored normalized stats** (and/or stored snapshots transformed into deltas).
-- Raw payload snapshots are written to S3 so you can reprocess.
-- Rewards are rendered deterministically (SVG → PNG); no NFTs.
+```env
+# Core
+JWT_SECRET=
+DATABASE_URL=
+REDIS_URL=
 
----
+# OAuth
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
+STEAM_WEB_API_KEY=
 
-## Stripe subscription
+# Game APIs
+SUPERCELL_API_KEY=
+HENRIK_API_KEY=
 
-Endpoints:
-- `POST /billing/checkout` — returns Stripe Checkout URL
-- `POST /billing/portal` — returns Stripe customer portal URL
-- `POST /webhooks/stripe` — updates subscription status
+# Stripe (optional)
+STRIPE_SECRET_KEY=
+STRIPE_WEBHOOK_SECRET=
+STRIPE_PRICE_ID_MONTHLY=
 
----
+# Monitoring
+SENTRY_DSN=
+```
 
-## Notes / TODOs (intentionally small and contained)
+## License
 
-- Add full TRN Marvel Rivals normalization once you confirm the schema for your key.
-- Improve CS2 match-level ingest by integrating share-code match parsing.
-- Add richer in-app explanations for each skill domain (already partially available via `details`).
-- Add rate limiting and audit logs for production hardening.
-
----
+Private - All rights reserved.
