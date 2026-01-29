@@ -701,53 +701,54 @@ export default function DashboardPage() {
               const completed = q.status === "COMPLETED";
               return (
                 <AnimatedCard key={q.id} delay={0.1 + i * 0.05} className="p-4">
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <div className="font-semibold text-white">{q.title}</div>
-                        {completed && (
-                          <motion.span
-                            initial={{ scale: 0 }}
-                            animate={{ scale: 1 }}
-                            className="px-2 py-0.5 rounded-full text-xs bg-green-500/20 text-green-400 border border-green-500/30 shrink-0"
-                          >
-                            Complete
-                          </motion.span>
-                        )}
-                      </div>
-                      <div className="mt-1 text-sm text-zinc-400 break-words">{q.description}</div>
-                      <div className="mt-2 flex flex-wrap gap-2 text-xs">
-                        <span className="px-2 py-0.5 rounded-full bg-zinc-800 text-zinc-400">
-                          {domainLabels[q.domain] || q.domain}
-                        </span>
-                        <span className="px-2 py-0.5 rounded-full bg-zinc-800 text-zinc-400">
-                          {q.modeEligibility}
-                        </span>
-                        {q.game && (
-                          <span
-                            className="px-2 py-0.5 rounded-full text-zinc-300"
-                            style={{
-                              backgroundColor: `${gameColors[q.game]?.primary}20`,
-                              borderColor: `${gameColors[q.game]?.primary}40`,
-                              borderWidth: 1
-                            }}
-                          >
-                            {gameLabels[q.game] || q.game}
-                          </span>
-                        )}
-                      </div>
+                  {/* Header row with title and percentage */}
+                  <div className="flex items-center justify-between gap-4 mb-2">
+                    <div className="flex items-center gap-2 flex-wrap min-w-0 flex-1">
+                      <div className="font-semibold text-white">{q.title}</div>
+                      {completed && (
+                        <motion.span
+                          initial={{ scale: 0 }}
+                          animate={{ scale: 1 }}
+                          className="px-2 py-0.5 rounded-full text-xs bg-green-500/20 text-green-400 border border-green-500/30 shrink-0"
+                        >
+                          Complete
+                        </motion.span>
+                      )}
                     </div>
-                    <div className="text-right min-w-[100px]">
-                      <div className="text-2xl font-bold text-white">
-                        {completed ? '100' : <AnimatedNumber value={pct} duration={0.5} />}%
-                      </div>
-                      <div className="mt-2 w-24">
-                        <AnimatedProgressBar
-                          value={completed ? 100 : pct}
-                          color={completed ? "#22c55e" : "#fff"}
-                          delay={0.2 + i * 0.05}
-                        />
-                      </div>
+                    <div className="text-2xl font-bold text-white shrink-0">
+                      {completed ? '100' : <AnimatedNumber value={pct} duration={0.5} />}%
+                    </div>
+                  </div>
+                  {/* Description - full width */}
+                  <p className="text-sm text-zinc-400 mb-3">{q.description}</p>
+                  {/* Tags and progress bar */}
+                  <div className="flex items-center justify-between gap-4">
+                    <div className="flex flex-wrap gap-2 text-xs">
+                      <span className="px-2 py-0.5 rounded-full bg-zinc-800 text-zinc-400">
+                        {domainLabels[q.domain] || q.domain}
+                      </span>
+                      <span className="px-2 py-0.5 rounded-full bg-zinc-800 text-zinc-400">
+                        {q.modeEligibility}
+                      </span>
+                      {q.game && (
+                        <span
+                          className="px-2 py-0.5 rounded-full text-zinc-300"
+                          style={{
+                            backgroundColor: `${gameColors[q.game]?.primary}20`,
+                            borderColor: `${gameColors[q.game]?.primary}40`,
+                            borderWidth: 1
+                          }}
+                        >
+                          {gameLabels[q.game] || q.game}
+                        </span>
+                      )}
+                    </div>
+                    <div className="w-24 shrink-0">
+                      <AnimatedProgressBar
+                        value={completed ? 100 : pct}
+                        color={completed ? "#22c55e" : "#fff"}
+                        delay={0.2 + i * 0.05}
+                      />
                     </div>
                   </div>
                 </AnimatedCard>
@@ -785,7 +786,7 @@ export default function DashboardPage() {
 
               {/* Per-game win/loss streaks */}
               {data.streaksAndMilestones.gameStreaks
-                .filter((gs: any) => gs.currentStreak >= 2)
+                .filter((gs: any) => gs.currentStreak >= 2 && gs.game !== "CS2")
                 .map((gs: any, i: number) => {
                   const colors = gameColors[gs.game] || gameColors.MARVEL_RIVALS;
                   const isWin = gs.streakType === "WIN";
@@ -819,7 +820,7 @@ export default function DashboardPage() {
 
               {/* Milestones */}
               {data.streaksAndMilestones.milestones
-                .filter((m: any) => m.type !== 'win_streak') // win streaks shown above
+                .filter((m: any) => m.type !== 'win_streak' && m.game !== "CS2") // win streaks shown above, exclude CS2
                 .map((m: any, i: number) => {
                   const colors = m.game ? (gameColors[m.game] || gameColors.MARVEL_RIVALS) : null;
                   return (

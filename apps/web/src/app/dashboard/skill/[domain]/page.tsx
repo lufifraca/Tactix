@@ -241,8 +241,8 @@ export default function SkillDetailPage() {
         <AnimatedCard delay={0.4} className="mt-6 p-6">
           <div className="text-lg font-semibold text-white mb-4">Recent Contributing Matches</div>
           <div className="space-y-3">
-            {data.matches && data.matches.length > 0 ? (
-              data.matches.map((m: any, i: number) => {
+            {data.matches && data.matches.filter((m: any) => m.game !== "CS2").length > 0 ? (
+              data.matches.filter((m: any) => m.game !== "CS2").map((m: any, i: number) => {
                 const colors = gameColors[m.game] || gameColors.MARVEL_RIVALS;
                 return (
                   <motion.div

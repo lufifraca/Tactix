@@ -207,7 +207,7 @@ export default function MatchHistoryPage() {
         ) : (
           <div className="space-y-2">
             <AnimatePresence mode="popLayout">
-              {matches.map((match, i) => {
+              {matches.filter(m => m.game !== "CS2").map((match, i) => {
                 const gc = gameColors[match.game] || { primary: "#71717a", bg: "bg-zinc-500/10", border: "border-zinc-500/30" };
                 const rs = resultStyles[match.result] || resultStyles.DRAW;
                 const expanded = expandedMatch === match.id;
