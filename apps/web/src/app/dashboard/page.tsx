@@ -889,10 +889,10 @@ export default function DashboardPage() {
           </div>
         </section>
 
-        {/* Tracked Games */}
+        {/* Current Ranks */}
         {data.linkedAccounts && data.linkedAccounts.filter(a => a.game !== "CS2").length > 0 && (
           <section className="mt-8">
-            <SectionHeader title="Tracked Games" subtitle={`${data.linkedAccounts.filter(a => a.game !== "CS2").length} linked`} />
+            <SectionHeader title="Current Ranks" subtitle={`${data.linkedAccounts.filter(a => a.game !== "CS2").length} accounts`} />
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
               {data.linkedAccounts
                 .filter(a => a.game !== "CS2")
