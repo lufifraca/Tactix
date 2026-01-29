@@ -1,6 +1,5 @@
 import { prisma } from "../../prisma";
 import { extractErrorMessage } from "../../utils/http";
-import { ingestCs2Account } from "./cs2/index.js";
 import { ingestMarvelRivalsAccount } from "./marvelRivals/index.js";
 
 export async function ingestGameAccount(gameAccountId: string) {
@@ -38,9 +37,10 @@ export async function ingestGameAccount(gameAccountId: string) {
     }
   }
 
+  // CS2 is no longer tracked - skip data fetching entirely
   if (account.game === "CS2") {
-    const res = await ingestCs2Account(account);
-    return { ok: true, inserted: res.inserted, game: "CS2" };
+    console.log(`[Ingest] Skipping CS2 account ${account.id} - CS2 tracking disabled`);
+    return { ok: true, inserted: 0, game: "CS2", skipped: true };
   }
 
   if (account.game === "MARVEL_RIVALS") {

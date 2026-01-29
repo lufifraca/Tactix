@@ -47,7 +47,6 @@ export const domainLabels: Record<string, string> = {
   MECHANICS: "Mechanics",
   AGGRESSION: "Aggression",
   VITALITY: "Vitality",
-  OBJECTIVE: "Objective",
   TEAMWORK: "Teamwork",
   CONSISTENCY: "Consistency",
   VERSATILITY: "Versatility",

@@ -702,20 +702,20 @@ export default function DashboardPage() {
               return (
                 <AnimatedCard key={q.id} delay={0.1 + i * 0.05} className="p-4">
                   <div className="flex items-start justify-between gap-4">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <div className="font-semibold text-white line-clamp-1" title={q.title}>{q.title}</div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <div className="font-semibold text-white">{q.title}</div>
                         {completed && (
                           <motion.span
                             initial={{ scale: 0 }}
                             animate={{ scale: 1 }}
-                            className="px-2 py-0.5 rounded-full text-xs bg-green-500/20 text-green-400 border border-green-500/30"
+                            className="px-2 py-0.5 rounded-full text-xs bg-green-500/20 text-green-400 border border-green-500/30 shrink-0"
                           >
                             Complete
                           </motion.span>
                         )}
                       </div>
-                      <div className="mt-1 text-sm text-zinc-400">{q.description}</div>
+                      <div className="mt-1 text-sm text-zinc-400 break-words">{q.description}</div>
                       <div className="mt-2 flex flex-wrap gap-2 text-xs">
                         <span className="px-2 py-0.5 rounded-full bg-zinc-800 text-zinc-400">
                           {domainLabels[q.domain] || q.domain}
@@ -859,7 +859,7 @@ export default function DashboardPage() {
         <section className="mt-8">
           <SectionHeader title="Skill Domains" subtitle="Cross-game · last 20 matches" />
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {data.skillScores.map((s, i) => {
+            {data.skillScores.filter(s => s.domain !== "OBJECTIVE").map((s, i) => {
               const details = (s as any).details;
               return (
                 <Link href={`/dashboard/skill/${s.domain}`} key={s.domain}>

@@ -111,18 +111,6 @@ export async function computeCrossGameSkillScores(userId: string, mode: "ALL" | 
     100
   );
 
-  // OBJECTIVE (Unchanged)
-  const objPerMatch = ratio(totals.obj, stats.length, 0);
-  const plantDefuse = totals.plants + totals.defuses;
-  const objective = clamp(
-    Math.round(
-      100 *
-      (0.6 * score01HigherBetter(objPerMatch, 40, 90) + 0.4 * score01HigherBetter(plantDefuse, 2, 5))
-    ),
-    0,
-    100
-  );
-
   // TEAMWORK (was Utility Intent)
   const utilSignal = totals.utilDmg + totals.flashA * 120 + totals.heal * 0.15 + totals.assists * 50;
   const teamwork = clamp(Math.round(100 * score01HigherBetter(utilSignal, 1200, 2600)), 0, 100);
@@ -176,37 +164,32 @@ export async function computeCrossGameSkillScores(userId: string, mode: "ALL" | 
     {
       domain: "MECHANICS",
       score: mechanics,
-      details: { kd, hsr, dpm, attributionCounts: getAttributionCounts(m => (m.stats?.cumulative?.headshots ?? m.stats?.headshots ?? 0) > 0 || (m.game === "CS2") || (m.game === "CLASH_ROYALE")) }
+      details: { kd, hsr, dpm, attributionCounts: getAttributionCounts(() => true) }
     },
     {
       domain: "AGGRESSION",
       score: aggression,
-      details: { firstWinRate, firstTotal, attributionCounts: getAttributionCounts(m => (m.stats?.firstEngagementWins ?? 0) > 0 || m.game === "CS2" || m.game === "CLASH_ROYALE") }
+      details: { firstWinRate, firstTotal, attributionCounts: getAttributionCounts(() => true) }
     },
     {
       domain: "VITALITY",
       score: vitality,
-      details: { kd, deathsPer10, attributionCounts: getAttributionCounts(m => (m.stats?.deaths ?? 0) > 0 || m.game.includes("_ROYALE")) }
-    },
-    {
-      domain: "OBJECTIVE",
-      score: objective,
-      details: { objPerMatch, plantDefuse, attributionCounts: getAttributionCounts(m => (m.stats?.objectiveTimeSeconds ?? 0) > 0 || (m.stats?.plants ?? 0) > 0 || (m.stats?.crowns ?? 0) > 0) }
+      details: { kd, deathsPer10, attributionCounts: getAttributionCounts(() => true) }
     },
     {
       domain: "TEAMWORK",
       score: teamwork,
-      details: { utilSignal, attributionCounts: getAttributionCounts(m => (m.stats?.assists ?? 0) > 0 || (m.stats?.flashAssists ?? 0) > 0) }
+      details: { utilSignal, attributionCounts: getAttributionCounts(() => true) }
     },
     {
       domain: "CONSISTENCY",
       score: consistency,
-      details: { kdStd, attributionCounts: getAttributionCounts(m => true) }
+      details: { kdStd, attributionCounts: getAttributionCounts(() => true) }
     },
     {
       domain: "VERSATILITY",
       score: versatility,
-      details: { uniqueGames, attributionCounts: getAttributionCounts(m => true) }
+      details: { uniqueGames, attributionCounts: getAttributionCounts(() => true) }
     },
   ];
 
