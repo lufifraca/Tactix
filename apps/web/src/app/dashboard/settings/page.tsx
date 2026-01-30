@@ -145,8 +145,23 @@ export default function SettingsPage() {
   }
 
   async function manageBilling() {
-    const r = await apiPost<{ url: string }>("/billing/portal");
-    window.location.href = r.url;
+    // Direct link to Stripe Customer Portal (users log in with email)
+    const portalUrl = process.env.NEXT_PUBLIC_STRIPE_PORTAL_URL;
+    if (portalUrl) {
+      window.location.href = portalUrl;
+      return;
+    }
+    // Fallback to API-based portal
+    try {
+      const r = await apiPost<{ url: string }>("/billing/portal");
+      if (r.url) {
+        window.location.href = r.url;
+      } else {
+        showMessage("Unable to open billing portal. Contact support to manage your subscription.", "error");
+      }
+    } catch {
+      showMessage("Unable to open billing portal. Contact support to manage your subscription.", "error");
+    }
   }
 
   if (loading) {
