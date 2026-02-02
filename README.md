@@ -197,6 +197,20 @@ STRIPE_PRICE_ID_MONTHLY=
 SENTRY_DSN=
 ```
 
+## Development
+
+### AI-Assisted Development
+
+This project was built with assistance from [Claude](https://claude.ai) (Anthropic's AI assistant). Claude helped with:
+
+- **Feature implementation** - Building out dashboard components, quest systems, and analytics displays
+- **Bug fixes & debugging** - Resolving UI issues like text truncation, color theming, and stat display logic
+- **API integrations** - Connecting to game APIs (Marvel Rivals, Valorant, Supercell, Steam)
+- **Code refactoring** - Improving component structure and handling edge cases
+- **Stripe integration** - Setting up billing portal flows and subscription handling
+
+The collaborative workflow involved iterating on features through conversation, with Claude providing code suggestions and fixes that were reviewed and integrated into the codebase.
+
 ## License
 
 Private - All rights reserved.
