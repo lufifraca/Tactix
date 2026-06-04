@@ -1,11 +1,42 @@
 import { prisma } from "../../prisma";
+import { env } from "../../env";
 import { extractErrorMessage } from "../../utils/http";
 import { ingestMarvelRivalsAccount } from "./marvelRivals/index.js";
 
 // How long to wait before re-fetching a user's Steam library (6 hours).
 const STEAM_LIBRARY_TTL_SECONDS = 6 * 60 * 60;
 
+// Cap stored matches per account so history doesn't grow unbounded. We keep the
+// most-recent N (analytics/coaching only care about recent form anyway).
+const MATCH_LIMIT_PER_ACCOUNT = Number(env.MATCH_LIMIT_PER_ACCOUNT) || 100;
+
+/** Delete all but the most-recent `keep` matches for an account. */
+export async function pruneAccountMatches(gameAccountId: string, keep = MATCH_LIMIT_PER_ACCOUNT) {
+  const stale = await prisma.match.findMany({
+    where: { gameAccountId },
+    orderBy: [{ startedAt: { sort: "desc", nulls: "last" } }, { ingestedAt: "desc" }],
+    select: { id: true },
+    skip: keep, // everything past the most-recent `keep`
+  });
+  if (stale.length) {
+    await prisma.match.deleteMany({ where: { id: { in: stale.map((m) => m.id) } } });
+  }
+  return stale.length;
+}
+
+/** Ingest an account, then trim its match history to the per-account cap. */
 export async function ingestGameAccount(gameAccountId: string) {
+  const result = await ingestGameAccountInner(gameAccountId);
+  try {
+    const pruned = await pruneAccountMatches(gameAccountId);
+    if (pruned > 0) console.log(`[Ingest] Pruned ${pruned} old matches for account ${gameAccountId} (cap ${MATCH_LIMIT_PER_ACCOUNT})`);
+  } catch (e) {
+    console.warn(`[Ingest] Prune failed for ${gameAccountId}:`, (e as any)?.message ?? e);
+  }
+  return result;
+}
+
+async function ingestGameAccountInner(gameAccountId: string) {
   const account = await prisma.gameAccount.findUnique({ where: { id: gameAccountId } });
   if (!account) return { ok: false, error: "Account not found" };
 

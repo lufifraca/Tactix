@@ -10,14 +10,36 @@ const API_BASE =
     ? "/api"
     : "http://localhost:3001");
 
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
 export async function apiGet<T>(path: string): Promise<T> {
-  const res = await fetch(`${API_BASE}${path}`, {
-    credentials: "include",
-    headers: { "content-type": "application/json" },
-    cache: "no-store",
-  });
-  if (!res.ok) throw new Error(await res.text());
-  return (await res.json()) as T;
+  // The API runs on a free tier that cold-starts (~30-60s). The proxy returns a
+  // 503 "backend_waking" while it boots; auto-retry (with backoff) so reads load
+  // themselves instead of erroring and forcing a manual retry. ~20s of client
+  // retries on top of the proxy's own wait covers a typical cold start.
+  const MAX_RETRIES = 4;
+  for (let attempt = 0; ; attempt++) {
+    let res: Response;
+    try {
+      res = await fetch(`${API_BASE}${path}`, {
+        credentials: "include",
+        headers: { "content-type": "application/json" },
+        cache: "no-store",
+      });
+    } catch (e) {
+      if (attempt < MAX_RETRIES) {
+        await sleep(2000 * (attempt + 1));
+        continue;
+      }
+      throw e;
+    }
+    if (res.status === 503 && attempt < MAX_RETRIES) {
+      await sleep(2000 * (attempt + 1));
+      continue;
+    }
+    if (!res.ok) throw new Error(await res.text());
+    return (await res.json()) as T;
+  }
 }
 
 export async function apiPost<T>(path: string, body?: any): Promise<T> {

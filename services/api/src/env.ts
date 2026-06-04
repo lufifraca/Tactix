@@ -55,6 +55,8 @@ const EnvSchema = z.object({
   HENRIK_API_KEY: z.string().optional(),
   // Max Henrik requests/minute to self-throttle to (defaults to 30 = basic tier).
   HENRIK_RATE_LIMIT_PER_MIN: z.coerce.number().optional(),
+  // Keep at most this many (most-recent) matches per linked account (default 100).
+  MATCH_LIMIT_PER_ACCOUNT: z.coerce.number().optional(),
 
   STRIPE_SECRET_KEY: z.string().optional(),
   STRIPE_WEBHOOK_SECRET: z.string().optional(),
