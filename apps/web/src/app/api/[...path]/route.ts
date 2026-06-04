@@ -39,13 +39,24 @@ async function proxy(req: NextRequest) {
 
   try {
     const upstream = await fetch(url, { ...init, signal: ctrl.signal });
+    // Buffer the body rather than streaming `upstream.body`. Streaming a web
+    // ReadableStream through a Node serverless function is fragile on Vercel and
+    // can surface as a client-side "Failed to fetch". API responses are small
+    // JSON, so reading them in full is cheap and reliable.
+    const body = await upstream.arrayBuffer();
+    clearTimeout(timer);
 
     const resHeaders = new Headers();
     upstream.headers.forEach((value, key) => {
+      const k = key.toLowerCase();
+      // Drop headers that no longer match the re-emitted body / are hop-by-hop.
+      if (k === "content-encoding" || k === "content-length" || k === "transfer-encoding" || k === "connection") {
+        return;
+      }
       resHeaders.append(key, value);
     });
 
-    return new Response(upstream.body, {
+    return new Response(body, {
       status: upstream.status,
       headers: resHeaders,
     });
