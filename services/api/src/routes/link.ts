@@ -4,6 +4,18 @@ import { prisma } from "../prisma";
 import { requireUser, type AuthedRequest } from "../auth/middleware";
 import { encryptString } from "../utils/crypto";
 
+/**
+ * Make an account's historical matches/ranks belong to whoever currently owns
+ * the account. Without this, re-linking an account to a different user (which
+ * the upsert allows, since accounts are keyed by game+provider+externalId)
+ * leaves the old matches attributed to the previous user, so the new owner
+ * sees an account with zero stats.
+ */
+async function reattachAccountData(gameAccountId: string, userId: string) {
+  await prisma.match.updateMany({ where: { gameAccountId, userId: { not: userId } }, data: { userId } });
+  await prisma.rankSnapshot.updateMany({ where: { gameAccountId, userId: { not: userId } }, data: { userId } });
+}
+
 export async function linkRoutes(app: FastifyInstance) {
   app.post("/cs2", async (req: AuthedRequest, reply) => {
     const user = await requireUser(req);
@@ -67,6 +79,7 @@ export async function linkRoutes(app: FastifyInstance) {
       },
     });
 
+    await reattachAccountData(account.id, user.id);
     return { ok: true, accountId: account.id };
   });
 
@@ -138,6 +151,7 @@ export async function linkRoutes(app: FastifyInstance) {
       },
     });
 
+    await reattachAccountData(account.id, user.id);
     return { ok: true, accountId: account.id, displayName: profile.name };
   });
 
@@ -212,6 +226,7 @@ export async function linkRoutes(app: FastifyInstance) {
       },
     });
 
+    await reattachAccountData(gameAccount.id, user.id);
     return { ok: true, accountId: gameAccount.id, displayName };
   });
 }
