@@ -13,6 +13,20 @@ const API_ORIGIN = "https://tactix-6jc8.onrender.com";
 // "waking up" message instead of a raw platform timeout.
 const UPSTREAM_TIMEOUT_MS = 55_000;
 
+// Gateway errors mean the request never reached the app (Render is cold-starting
+// or restarting), so they're safe to retry — even for non-GET methods.
+const GATEWAY_ERRORS = new Set([502, 503, 504]);
+const RETRY_DELAY_MS = 4_000;
+
+const wakingResponse = () =>
+  new Response(
+    JSON.stringify({
+      error: "backend_waking",
+      message: "The server is waking up — please retry in a few seconds.",
+    }),
+    { status: 503, headers: { "content-type": "application/json" } }
+  );
+
 async function proxy(req: NextRequest) {
   const { pathname, search } = req.nextUrl;
   const backendPath = pathname.replace(/^\/api/, "");
@@ -38,7 +52,24 @@ async function proxy(req: NextRequest) {
   const timer = setTimeout(() => ctrl.abort(), UPSTREAM_TIMEOUT_MS);
 
   try {
-    const upstream = await fetch(url, { ...init, signal: ctrl.signal });
+    let upstream: Response | null = null;
+
+    // Retry gateway errors (cold start) until the app responds or we run out of
+    // budget (the abort signal caps total time).
+    for (;;) {
+      upstream = await fetch(url, { ...init, signal: ctrl.signal });
+      if (!GATEWAY_ERRORS.has(upstream.status)) break;
+      await upstream.arrayBuffer().catch(() => {}); // drain before retrying
+      if (ctrl.signal.aborted) break;
+      await new Promise((r) => setTimeout(r, RETRY_DELAY_MS));
+      if (ctrl.signal.aborted) break;
+    }
+
+    if (GATEWAY_ERRORS.has(upstream.status)) {
+      clearTimeout(timer);
+      return wakingResponse();
+    }
+
     // Buffer the body rather than streaming `upstream.body`. Streaming a web
     // ReadableStream through a Node serverless function is fragile on Vercel and
     // can surface as a client-side "Failed to fetch". API responses are small
@@ -62,19 +93,12 @@ async function proxy(req: NextRequest) {
     });
   } catch (err: unknown) {
     const aborted = err instanceof Error && err.name === "AbortError";
+    if (aborted) return wakingResponse();
     const message = err instanceof Error ? err.message : "Unknown proxy error";
-    return new Response(
-      JSON.stringify({
-        error: aborted ? "backend_waking" : "proxy_error",
-        message: aborted
-          ? "The server is waking up — please retry in a few seconds."
-          : message,
-      }),
-      {
-        status: aborted ? 503 : 502,
-        headers: { "content-type": "application/json" },
-      }
-    );
+    return new Response(JSON.stringify({ error: "proxy_error", message }), {
+      status: 502,
+      headers: { "content-type": "application/json" },
+    });
   } finally {
     clearTimeout(timer);
   }
