@@ -1,9 +1,17 @@
 import { NextRequest } from "next/server";
 
-// Edge Runtime: 30 s timeout (vs 10 s for serverless on Hobby plan)
-export const runtime = "edge";
+// Node serverless runtime so we can extend maxDuration past the Edge 30s cap.
+// Render's free tier cold-starts can take ~30-60s; Edge would time out (the
+// dreaded FUNCTION_INVOCATION_TIMEOUT). 60s is the Vercel Hobby max (Vercel
+// caps to the plan limit automatically if it's lower).
+export const runtime = "nodejs";
+export const maxDuration = 60;
 
 const API_ORIGIN = "https://tactix-6jc8.onrender.com";
+
+// Abort just under the function budget so a still-cold backend returns a clean
+// "waking up" message instead of a raw platform timeout.
+const UPSTREAM_TIMEOUT_MS = 55_000;
 
 async function proxy(req: NextRequest) {
   const { pathname, search } = req.nextUrl;
@@ -26,8 +34,11 @@ async function proxy(req: NextRequest) {
     init.body = await req.arrayBuffer();
   }
 
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), UPSTREAM_TIMEOUT_MS);
+
   try {
-    const upstream = await fetch(url, init);
+    const upstream = await fetch(url, { ...init, signal: ctrl.signal });
 
     const resHeaders = new Headers();
     upstream.headers.forEach((value, key) => {
@@ -39,11 +50,22 @@ async function proxy(req: NextRequest) {
       headers: resHeaders,
     });
   } catch (err: unknown) {
+    const aborted = err instanceof Error && err.name === "AbortError";
     const message = err instanceof Error ? err.message : "Unknown proxy error";
-    return new Response(JSON.stringify({ error: "proxy_error", message }), {
-      status: 502,
-      headers: { "content-type": "application/json" },
-    });
+    return new Response(
+      JSON.stringify({
+        error: aborted ? "backend_waking" : "proxy_error",
+        message: aborted
+          ? "The server is waking up — please retry in a few seconds."
+          : message,
+      }),
+      {
+        status: aborted ? 503 : 502,
+        headers: { "content-type": "application/json" },
+      }
+    );
+  } finally {
+    clearTimeout(timer);
   }
 }
 

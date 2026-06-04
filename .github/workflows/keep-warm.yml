@@ -1,0 +1,20 @@
+name: Keep API warm
+
+# Render's free tier spins the API down after ~15 min idle, and the cold start
+# can exceed the Vercel proxy timeout. Pinging /health every 10 min keeps it
+# awake so requests stay fast. Best-effort: GitHub may delay scheduled runs, and
+# disables schedules after 60 days of repo inactivity. For guaranteed uptime,
+# use an external pinger (UptimeRobot) or a paid Render plan (no spin-down).
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch: {}
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping API health
+        run: |
+          code=$(curl -sS -o /dev/null -w "%{http_code}" -m 40 https://tactix-6jc8.onrender.com/health || echo "000")
+          echo "health -> HTTP $code"
