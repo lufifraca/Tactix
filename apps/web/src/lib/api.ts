@@ -1,6 +1,14 @@
 import { DashboardResponse } from "@tactix/shared";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:3001";
+// Prefer the explicit env var. If it's missing/empty, fall back to the
+// same-origin "/api" proxy in the browser (prod) — never to localhost, which
+// would fail on a deployed site ("Failed to fetch"). Local dev still uses the
+// API on :3001 when the env var is unset.
+const API_BASE =
+  process.env.NEXT_PUBLIC_API_BASE_URL ||
+  (typeof window !== "undefined" && window.location.hostname !== "localhost"
+    ? "/api"
+    : "http://localhost:3001");
 
 export async function apiGet<T>(path: string): Promise<T> {
   const res = await fetch(`${API_BASE}${path}`, {
