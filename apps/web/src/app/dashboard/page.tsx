@@ -93,11 +93,12 @@ export default function DashboardPage() {
     setRefreshMsg(null);
     try {
       // Ingestion now runs in the background server-side (a full sync can exceed
-      // the request timeout), so we just kick it off and reload as results land.
+      // the request timeout), so we just kick it off and reload as results land,
+      // then clear the banner once it's settled.
       await apiPost("/ingest/refresh");
-      setRefreshMsg({ type: "success", text: "Syncing… new matches will appear in a moment (can take up to a minute)." });
+      setRefreshMsg({ type: "success", text: "Syncing… new matches will appear shortly." });
       setTimeout(() => { load(); }, 8000);
-      setTimeout(() => { load(); }, 25000);
+      setTimeout(() => { load(); setRefreshMsg(null); }, 25000);
     } catch (e: any) {
       setRefreshMsg({ type: "error", text: e?.message ?? "Refresh failed" });
       await load();

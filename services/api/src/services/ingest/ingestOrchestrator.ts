@@ -24,7 +24,13 @@ export async function pruneAccountMatches(gameAccountId: string, keep = MATCH_LI
   return stale.length;
 }
 
-/** Ingest an account, then trim its match history to the per-account cap. */
+/** Drop today's cached AI coach so it regenerates from fresh data. */
+function invalidateCoachReport(userId: string) {
+  const date = new Date(`${new Date().toISOString().slice(0, 10)}T00:00:00.000Z`);
+  return prisma.coachReport.deleteMany({ where: { userId, date } });
+}
+
+/** Ingest an account, trim its history to the cap, and refresh the coach if new matches landed. */
 export async function ingestGameAccount(gameAccountId: string) {
   const result = await ingestGameAccountInner(gameAccountId);
   try {
@@ -32,6 +38,15 @@ export async function ingestGameAccount(gameAccountId: string) {
     if (pruned > 0) console.log(`[Ingest] Pruned ${pruned} old matches for account ${gameAccountId} (cap ${MATCH_LIMIT_PER_ACCOUNT})`);
   } catch (e) {
     console.warn(`[Ingest] Prune failed for ${gameAccountId}:`, (e as any)?.message ?? e);
+  }
+  // New matches → invalidate today's cached coach so it regenerates next view.
+  try {
+    if ((result as any)?.inserted > 0) {
+      const acct = await prisma.gameAccount.findUnique({ where: { id: gameAccountId }, select: { userId: true } });
+      if (acct) await invalidateCoachReport(acct.userId);
+    }
+  } catch (e) {
+    console.warn(`[Ingest] Coach invalidate failed for ${gameAccountId}:`, (e as any)?.message ?? e);
   }
   return result;
 }

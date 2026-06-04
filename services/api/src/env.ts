@@ -37,7 +37,6 @@ const EnvSchema = z.object({
   STEAM_BOT_PASSWORD: z.string().optional(),
   STEAM_BOT_SHARED_SECRET: z.string().optional(),
 
-  TRN_API_KEY: z.string().optional(),
   MARVEL_RIVALS_API_BASE: z.string().url().optional(),
   MARVEL_RIVALS_API_KEY: z.string().optional(),
 

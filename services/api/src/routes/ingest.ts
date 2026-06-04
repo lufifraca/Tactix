@@ -53,7 +53,6 @@ export async function ingestRoutes(app: FastifyInstance) {
       STEAM_WEB_API_KEY: !!env.STEAM_WEB_API_KEY,
       MARVEL_RIVALS_API_KEY: !!env.MARVEL_RIVALS_API_KEY,
       HENRIK_API_KEY: !!env.HENRIK_API_KEY,
-      TRN_API_KEY: !!env.TRN_API_KEY,
       CLASH_ROYALE_API_TOKEN: !!env.CLASH_ROYALE_API_TOKEN,
       BRAWL_STARS_API_TOKEN: !!env.BRAWL_STARS_API_TOKEN,
       S3_CONFIGURED: !!(env.S3_ENDPOINT && env.S3_ACCESS_KEY_ID && env.S3_SECRET_ACCESS_KEY),

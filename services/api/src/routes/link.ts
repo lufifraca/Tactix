@@ -49,11 +49,12 @@ export async function linkRoutes(app: FastifyInstance) {
     const Body = z.object({
       username: z.string().min(2),
       platform: z.string().optional().default("pc"),
-      providerPreference: z.enum(["TRACKER_NETWORK", "COMMUNITY"]).optional().default("TRACKER_NETWORK"),
     });
     const body = Body.parse((req as any).body);
 
-    // We store as COMMUNITY provider by default for v1, but keep preference in meta.
+    // Marvel Rivals has no official API; we ingest from the community provider
+    // (marvelrivalsapi.com). Don't overwrite meta on update — ingest caches the
+    // resolved playerUid there.
     const account = await prisma.gameAccount.upsert({
       where: {
         game_provider_externalId: {
@@ -66,7 +67,6 @@ export async function linkRoutes(app: FastifyInstance) {
         userId: user.id,
         displayName: body.username,
         platform: body.platform,
-        meta: { providerPreference: body.providerPreference },
       },
       create: {
         userId: user.id,
@@ -75,7 +75,6 @@ export async function linkRoutes(app: FastifyInstance) {
         externalId: `${body.platform}:${body.username}`,
         displayName: body.username,
         platform: body.platform,
-        meta: { providerPreference: body.providerPreference },
       },
     });
 

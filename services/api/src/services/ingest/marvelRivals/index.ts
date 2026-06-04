@@ -5,8 +5,7 @@ import { putObject } from "../../storage";
 import { extractErrorMessage } from "../../../utils/http";
 import { sha256Hex } from "../../../utils/crypto";
 import { fetchMarvelMatchHistoryWithRetry, fetchMarvelPlayerProfile } from "./community";
-import { fetchMarvelProfileTrackerNetwork } from "./trackerNetwork";
-import { normalizeMarvelMatchFromCommunity, normalizeMarvelMatchFromTRN } from "./normalize";
+import { normalizeMarvelMatchFromCommunity } from "./normalize";
 import { saveRankSnapshot } from "../rankTracking";
 
 const MARVEL_RANK_LEVELS: Record<number, string> = {
@@ -29,44 +28,13 @@ export async function ingestMarvelRivalsAccount(account: GameAccount): Promise<{
     ? account.externalId.split(":", 2)
     : [account.platform ?? "pc", account.externalId];
 
-  const preference = (account.meta as any)?.providerPreference ?? "TRACKER_NETWORK";
-
-  // Primary: Tracker Network (if key works). Fallback: MarvelRivalsAPI.com match history.
-  let sourceUsed: GameProvider = "COMMUNITY";
+  // Source: MarvelRivalsAPI.com (community). Marvel Rivals has no official API.
+  const sourceUsed: GameProvider = "COMMUNITY";
   let matches: any[] = [];
   let rawPayloadS3Key: string | null = null;
   let rawPayloadSha256: string | null = null;
 
-  if (preference === "TRACKER_NETWORK") {
-    try {
-      const trn = await fetchMarvelProfileTrackerNetwork({ platform, username });
-      // TRN response doesn't have a stable match history schema across titles; store raw and fall back if no match array.
-      const trnBody = JSON.stringify(trn);
-      const trnSha = sha256Hex(trnBody);
-      const trnKey = `raw/marvel_rivals/trn/${account.userId}/${Date.now()}_${trnSha.slice(0, 10)}.json`;
-      try {
-        await putObject({ key: trnKey, body: trnBody, contentType: "application/json", cacheControl: "private, max-age=0" });
-        rawPayloadS3Key = trnKey;
-        rawPayloadSha256 = trnSha;
-      } catch (s3Err) {
-        console.warn("[Marvel Rivals] S3 TRN payload upload failed (non-blocking):", extractErrorMessage(s3Err as any));
-      }
-      sourceUsed = "TRACKER_NETWORK";
-
-      // Try to locate matches in a few common places.
-      const maybe = (trn?.data?.matches ?? trn?.data?.matchHistory ?? trn?.matches ?? []) as any[];
-      if (Array.isArray(maybe) && maybe.length > 0) {
-        matches = maybe;
-        sourceUsed = "TRACKER_NETWORK";
-      }
-    } catch (e) {
-      // fall back
-      console.error("TRN fetch failed, falling back to community API", e);
-      sourceUsed = "COMMUNITY";
-    }
-  }
-
-  if (matches.length === 0) {
+  {
     // Use retry logic: tries username first, then UID, then without filters
     const accountMeta = account.meta as any;
     const cachedUid = accountMeta?.playerUid ?? null;
@@ -78,7 +46,6 @@ export async function ingestMarvelRivalsAccount(account: GameAccount): Promise<{
       limit: 40,
     });
     matches = fetchedMatches;
-    sourceUsed = "COMMUNITY";
 
     const body = JSON.stringify({ match_history: matches, queryUsed });
     const sha = sha256Hex(body);
@@ -99,9 +66,7 @@ export async function ingestMarvelRivalsAccount(account: GameAccount): Promise<{
 
   for (const m of matches) {
     try {
-      const norm = sourceUsed === "TRACKER_NETWORK"
-        ? normalizeMarvelMatchFromTRN(m)
-        : normalizeMarvelMatchFromCommunity(m);
+      const norm = normalizeMarvelMatchFromCommunity(m);
 
       if (!norm.matchId) continue;
 

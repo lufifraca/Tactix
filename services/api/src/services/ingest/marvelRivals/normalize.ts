@@ -1,4 +1,4 @@
-import { type GameProvider, type MatchMode, type MatchResult } from "../../../constants";
+import { type MatchMode, type MatchResult } from "../../../constants";
 
 function parseDurationSeconds(raw: any): number | null {
   if (typeof raw === "number" && Number.isFinite(raw)) return Math.round(raw);
@@ -63,50 +63,6 @@ export function normalizeMarvelMatchFromCommunity(match: any) {
     mode: inferMode(mp),
     result: inferResult(mp),
     map: match.match_map_id ? `map_${match.match_map_id}` : null,
-    normalizedStats,
-  };
-}
-
-export function normalizeMarvelMatchFromTRN(match: any) {
-  // TRN v2 Standard Schema interpretation
-  // Adjust field access based on actual JSON dump if available.
-  const attr = match.attributes ?? {};
-  const meta = match.metadata ?? {};
-  const segments = match.segments ?? [];
-  const overview = segments.find((s: any) => s.type === "overview")?.stats ?? {};
-
-  const resultStr = meta.result?.toLowerCase() ?? "";
-  let result: MatchResult = "UNKNOWN";
-  if (resultStr.includes("win") || resultStr.includes("victory")) result = "WIN";
-  else if (resultStr.includes("loss") || resultStr.includes("defeat")) result = "LOSS";
-  else if (resultStr.includes("draw") || resultStr.includes("tie")) result = "DRAW";
-
-  const durationStr = meta.duration?.displayValue ?? meta.duration?.value;
-  const durationSeconds = parseDurationSeconds(durationStr) ?? (typeof meta.duration?.value === 'number' ? meta.duration.value : undefined);
-
-  const normalizedStats = {
-    kills: overview.kills?.value ?? 0,
-    deaths: overview.deaths?.value ?? 0,
-    assists: overview.assists?.value ?? 0,
-    damageDealt: overview.damage?.value ?? overview.heroDamage?.value ?? 0,
-    damageTaken: overview.damageTaken?.value ?? 0,
-    healingDone: overview.healing?.value ?? 0,
-    matchDurationSeconds: durationSeconds,
-    score: overview.score?.value ?? undefined,
-    extra: {
-      mode: attr.modeId,
-      map: attr.mapId,
-    }
-  };
-
-  return {
-    matchId: String(attr.id ?? match.id ?? ""), // TRN match UUID
-    endedAt: meta.endDate?.value ? new Date(meta.endDate.value) : new Date(),
-    startedAt: meta.startDate?.value ? new Date(meta.startDate.value) : undefined,
-    durationSeconds,
-    mode: "UNRANKED" as MatchMode, // TRN might not explicitly expose rank delta in this endpoint yet
-    result,
-    map: attr.mapId ? `map_${attr.mapId}` : undefined,
     normalizedStats,
   };
 }
