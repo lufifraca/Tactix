@@ -21,7 +21,9 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          # Node 22: the test script globs "src/**/*.test.ts", which node --test
+          # only expands on Node 21+.
+          node-version: 22
           cache: pnpm
 
       - name: Install dependencies

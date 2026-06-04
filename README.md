@@ -70,8 +70,8 @@ tactix/
 ## Local Development
 
 ### Prerequisites
-- Node.js 20+
-- pnpm 8+
+- Node.js 22+ (the test runner globs test files, which needs Node 21+)
+- pnpm 9+
 - Docker (for local infrastructure)
 
 ### 1. Start Infrastructure
