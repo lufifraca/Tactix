@@ -5,10 +5,11 @@ import { requireUser, type AuthedRequest } from "../auth/middleware";
 import { ensureDailyQuests, ensureDailyBrief, recomputeQuestProgress } from "../services/quests/questEngine";
 import { getSkillScoresForDashboard, upsertDailySkillScores, computeCrossGameSkillScores } from "../services/skills/scoring";
 import { evaluateQuest } from "../services/quests/scoring";
-import { env } from "../env";
+import { env, isAdminEmail } from "../env";
 import { encodeS3Key } from "../services/storage";
 import { getLatestRank } from "../services/ingest/rankTracking";
 import { getSessionInsights } from "../services/sessions";
+import { generateCoachReport } from "../services/ai/coach";
 
 function todayUtc(): string {
   return new Date().toISOString().slice(0, 10);
@@ -280,7 +281,7 @@ export async function dashboardRoutes(app: FastifyInstance) {
       for (const acc of gameAccounts) {
         const recentMatches = await prisma.match.findMany({
           where: { userId: user.id, game: acc.game },
-          orderBy: { endedAt: "desc" },
+          orderBy: [{ startedAt: { sort: "desc", nulls: "last" } }, { endedAt: "desc" }],
           take: 20,
           select: { result: true },
         });
@@ -383,6 +384,7 @@ export async function dashboardRoutes(app: FastifyInstance) {
         displayName: user.displayName,
         avatarUrl: user.avatarUrl,
       },
+      isAdmin: isAdminEmail(user.email),
       subscriptionActive,
       modeFilter: mode,
       onboardingState,
@@ -565,8 +567,8 @@ export async function dashboardRoutes(app: FastifyInstance) {
   app.post("/debug/toggle-pro", async (req: AuthedRequest) => {
     const user = await requireUser(req);
 
-    // Only allow the app owner to toggle Pro for testing
-    if (user.email !== "lficanolatimer@gmail.com") {
+    // Only allow configured owner accounts to toggle Pro for testing
+    if (!isAdminEmail(user.email)) {
       return { ok: false, error: "Unauthorized. Please subscribe through the normal billing flow." };
     }
     const existing = await prisma.subscription.findUnique({ where: { userId: user.id } });
@@ -589,6 +591,54 @@ export async function dashboardRoutes(app: FastifyInstance) {
       },
     });
     return { ok: true, subscriptionActive: true };
+  });
+
+  // AI Coach — natural-language insights derived from the user's stats.
+  // Uses Claude/OpenAI when configured, otherwise a deterministic rules engine.
+  //
+  // The report is generated at most once per UTC day per user and cached, so the
+  // dashboard shows a stable read instead of a fresh (and differently-worded)
+  // coach on every visit. This also caps free users to one generation per day.
+  // Pro users can force a fresh report with ?refresh=1.
+  app.get("/coach", async (req: AuthedRequest) => {
+    const user = await requireUser(req);
+    const Query = z.object({ refresh: z.coerce.boolean().optional().default(false) });
+    const { refresh } = Query.parse(req.query);
+
+    const dateStr = todayUtc();
+    const date = new Date(`${dateStr}T00:00:00.000Z`);
+
+    const sub = await prisma.subscription.findUnique({ where: { userId: user.id } });
+    const isPro = sub?.status === "ACTIVE";
+
+    const cached = await prisma.coachReport.findUnique({
+      where: { userId_date: { userId: user.id, date } },
+    });
+
+    // Serve today's cached report unless a Pro user explicitly regenerates.
+    if (cached && !(refresh && isPro)) {
+      return { ok: true, report: cached.report, cached: true };
+    }
+
+    try {
+      const report = await generateCoachReport(user.id);
+      await prisma.coachReport.upsert({
+        where: { userId_date: { userId: user.id, date } },
+        update: { report: report as any, source: report.source },
+        create: { userId: user.id, date, report: report as any, source: report.source },
+      });
+      return { ok: true, report, cached: false };
+    } catch (e) {
+      console.error("Coach generation failed:", e);
+      // Fall back to the most recent cached report if generation fails.
+      if (cached) return { ok: true, report: cached.report, cached: true };
+      const latest = await prisma.coachReport.findFirst({
+        where: { userId: user.id },
+        orderBy: { date: "desc" },
+      });
+      if (latest) return { ok: true, report: latest.report, cached: true };
+      return { ok: false, error: "Coach is unavailable right now." };
+    }
   });
 
   app.get("/skill/:domain", async (req: AuthedRequest) => {
@@ -667,7 +717,10 @@ export async function dashboardRoutes(app: FastifyInstance) {
     const [matches, total] = await Promise.all([
       prisma.match.findMany({
         where,
-        orderBy: { endedAt: "desc" },
+        // Order by actual play time (startedAt). endedAt is inconsistent across
+        // sources — lifetime-backfilled matches have no duration so their endedAt
+        // equals startedAt, which would misorder them against full-detail matches.
+        orderBy: [{ startedAt: { sort: "desc", nulls: "last" } }, { endedAt: "desc" }],
         skip: (page - 1) * limit,
         take: limit,
         select: {
@@ -690,7 +743,20 @@ export async function dashboardRoutes(app: FastifyInstance) {
       prisma.match.count({ where }),
     ]);
 
+    // Earliest tracked match (by the current game filter, ignoring mode/result)
+    // so the UI can show "Tracking since {date}" and set history expectations.
+    const earliest = await prisma.match.findFirst({
+      where: {
+        userId: user.id,
+        ...(game && game !== "ALL" ? { game } : {}),
+        startedAt: { not: null },
+      },
+      orderBy: { startedAt: "asc" },
+      select: { startedAt: true },
+    });
+
     return {
+      trackingSince: earliest?.startedAt?.toISOString() ?? null,
       matches: matches.map((m) => ({
         id: m.id,
         game: m.game,

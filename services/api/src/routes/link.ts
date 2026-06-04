@@ -149,7 +149,9 @@ export async function linkRoutes(app: FastifyInstance) {
     const user = await requireUser(req);
     const Body = z.object({
       riotId: z.string().min(3), // Format: "GameName#TagLine"
-      region: z.enum(["americas", "europe", "asia"]).optional().default("americas"),
+      // Region is optional — we auto-detect it from the account. Only stored as a
+      // fallback when the user explicitly overrides.
+      region: z.enum(["americas", "europe", "asia"]).optional(),
     });
     const body = Body.parse((req as any).body);
 
@@ -157,7 +159,7 @@ export async function linkRoutes(app: FastifyInstance) {
 
     let account: any = null;
     try {
-      account = await validateRiotId(body.riotId, body.region);
+      account = await validateRiotId(body.riotId, body.region ?? "americas");
     } catch (e: any) {
       req.log.warn({ err: e }, "Riot ID validation failed");
       const msg = e.message || "Unknown error";
@@ -177,6 +179,15 @@ export async function linkRoutes(app: FastifyInstance) {
     // Format display name as "GameName#TagLine"
     const displayName = `${account.gameName}#${account.tagLine}`;
 
+    // Prefer Henrik's auto-detected region slug (na/eu/ap/kr/br/latam) over the
+    // user's guess — a wrong region makes match ingest silently return [].
+    const meta = {
+      gameName: account.gameName,
+      tagLine: account.tagLine,
+      ...(body.region ? { region: body.region } : {}),
+      ...(account.region ? { henrikRegion: account.region.toLowerCase() } : {}),
+    };
+
     // Upsert GameAccount
     const gameAccount = await prisma.gameAccount.upsert({
       where: {
@@ -189,11 +200,7 @@ export async function linkRoutes(app: FastifyInstance) {
       update: {
         userId: user.id,
         displayName,
-        meta: {
-          gameName: account.gameName,
-          tagLine: account.tagLine,
-          region: body.region,
-        },
+        meta,
       },
       create: {
         userId: user.id,
@@ -201,11 +208,7 @@ export async function linkRoutes(app: FastifyInstance) {
         provider: "RIOT",
         externalId: account.puuid,
         displayName,
-        meta: {
-          gameName: account.gameName,
-          tagLine: account.tagLine,
-          region: body.region,
-        },
+        meta,
       },
     });
 

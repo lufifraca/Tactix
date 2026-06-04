@@ -4,13 +4,34 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import Image from "next/image";
-import { apiGet, authUrl } from "@/lib/api";
+import { apiGet, authUrl, devLoginUrl, loginWithPassword, registerWithPassword } from "@/lib/api";
+import { Gamepad2, BarChart3, Target } from "@/components/icons";
+import { BrandMark } from "@/components/BrandMark";
+
+/** apiPost throws Error(responseText); the body is JSON like {"error":"..."}. */
+function parseApiError(e: unknown, fallback: string): string {
+  const raw = e instanceof Error ? e.message : String(e ?? "");
+  try {
+    const j = JSON.parse(raw);
+    if (j && typeof j.error === "string") return j.error;
+  } catch {
+    /* not JSON */
+  }
+  return raw || fallback;
+}
 
 export default function LoginPage() {
   const router = useRouter();
   const [authed, setAuthed] = useState<boolean | null>(null);
   const [checking, setChecking] = useState(true);
+
+  // Email/password form
+  const [mode, setMode] = useState<"signin" | "signup">("signin");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [displayName, setDisplayName] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
 
   useEffect(() => {
     apiGet<{ authenticated: boolean }>("/auth/session")
@@ -22,6 +43,33 @@ export default function LoginPage() {
       .finally(() => setChecking(false));
   }, [router]);
 
+  async function handlePasswordSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setFormError(null);
+
+    if (!email.trim() || !password) {
+      setFormError("Enter your email and password.");
+      return;
+    }
+    if (mode === "signup" && password.length < 8) {
+      setFormError("Password must be at least 8 characters.");
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      if (mode === "signup") {
+        await registerWithPassword(email.trim(), password, displayName.trim() || undefined);
+      } else {
+        await loginWithPassword(email.trim(), password);
+      }
+      router.replace("/dashboard");
+    } catch (err) {
+      setFormError(parseApiError(err, "Something went wrong. Please try again."));
+      setSubmitting(false);
+    }
+  }
+
   if (authed === true) {
     return null;
   }
@@ -30,9 +78,9 @@ export default function LoginPage() {
     <main className="min-h-screen bg-gradient-to-b from-zinc-950 via-zinc-900 to-zinc-950 flex items-center justify-center">
       {/* Ambient glow effects */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/4 -right-20 w-96 h-96 bg-purple-500/20 rounded-full blur-3xl" />
-        <div className="absolute bottom-1/4 -left-20 w-96 h-96 bg-cyan-500/20 rounded-full blur-3xl" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-gradient-radial from-purple-500/5 to-transparent rounded-full blur-2xl" />
+        <div className="absolute top-1/4 -right-20 w-96 h-96 bg-steel-600/20 rounded-full blur-3xl" />
+        <div className="absolute bottom-1/4 -left-20 w-96 h-96 bg-steel-400/20 rounded-full blur-3xl" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-gradient-radial from-steel-600/5 to-transparent rounded-full blur-2xl" />
       </div>
 
       <div className="relative w-full max-w-md px-6">
@@ -42,37 +90,25 @@ export default function LoginPage() {
           transition={{ duration: 0.6 }}
           className="text-center mb-10"
         >
-          {/* Logo */}
+          {/* Brand mark */}
           <motion.div
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ delay: 0.1, duration: 0.5 }}
-            className="mb-6"
+            className="mb-5 flex justify-center"
           >
-            <Image
-              src="/logo.png"
-              alt="Tactix Logo"
-              width={80}
-              height={80}
-              className="mx-auto drop-shadow-2xl"
-              priority
-            />
+            <BrandMark size={72} className="drop-shadow-2xl shadow-steel-400/30" />
           </motion.div>
 
-          {/* Title */}
+          {/* Wordmark */}
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2, duration: 0.5 }}
           >
-            <Image
-              src="/fonts/tactix_title.png"
-              alt="Tactix"
-              width={280}
-              height={70}
-              className="mx-auto"
-              priority
-            />
+            <h1 className="font-display text-5xl font-bold tracking-tight text-zinc-50">
+              Tacti<span className="bg-gradient-to-br from-steel-300 via-steel-100 to-steel-400 bg-clip-text text-transparent">x</span>
+            </h1>
           </motion.div>
           <p className="mt-3 text-zinc-400 text-lg">
             Your cross-game coaching companion
@@ -86,8 +122,85 @@ export default function LoginPage() {
           className="rounded-2xl border border-zinc-800/50 bg-zinc-900/50 backdrop-blur-xl p-8 shadow-2xl"
         >
           <div className="text-center mb-6">
-            <h2 className="text-xl font-semibold text-white">Sign in</h2>
-            <p className="text-sm text-zinc-500 mt-1">Choose your preferred method</p>
+            <h2 className="text-xl font-semibold text-white">
+              {mode === "signup" ? "Create your account" : "Sign in"}
+            </h2>
+            <p className="text-sm text-zinc-500 mt-1">
+              {mode === "signup" ? "Use your email and a password" : "Welcome back"}
+            </p>
+          </div>
+
+          {/* Email / password */}
+          <form onSubmit={handlePasswordSubmit} className="space-y-3 mb-5">
+            {mode === "signup" && (
+              <input
+                type="text"
+                value={displayName}
+                onChange={(e) => setDisplayName(e.target.value)}
+                placeholder="Display name (optional)"
+                autoComplete="nickname"
+                className="w-full rounded-xl bg-zinc-950 border border-zinc-800 px-4 py-3 text-sm text-white placeholder-zinc-600 focus:border-zinc-600 focus:outline-none transition-colors"
+              />
+            )}
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Email"
+              autoComplete="email"
+              required
+              className="w-full rounded-xl bg-zinc-950 border border-zinc-800 px-4 py-3 text-sm text-white placeholder-zinc-600 focus:border-zinc-600 focus:outline-none transition-colors"
+            />
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder={mode === "signup" ? "Password (min 8 characters)" : "Password"}
+              autoComplete={mode === "signup" ? "new-password" : "current-password"}
+              required
+              className="w-full rounded-xl bg-zinc-950 border border-zinc-800 px-4 py-3 text-sm text-white placeholder-zinc-600 focus:border-zinc-600 focus:outline-none transition-colors"
+            />
+
+            {formError && (
+              <p className="text-sm text-red-400">{formError}</p>
+            )}
+
+            <motion.button
+              type="submit"
+              disabled={submitting}
+              whileHover={{ scale: submitting ? 1 : 1.02 }}
+              whileTap={{ scale: submitting ? 1 : 0.98 }}
+              className="flex items-center justify-center gap-2 w-full rounded-xl bg-gradient-to-r from-steel-400 to-steel-700 px-4 py-3.5 text-white font-medium shadow-lg shadow-steel-600/20 disabled:opacity-60 disabled:cursor-not-allowed transition-opacity"
+            >
+              {submitting ? (
+                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              ) : mode === "signup" ? (
+                "Create account"
+              ) : (
+                "Sign in"
+              )}
+            </motion.button>
+          </form>
+
+          <div className="text-center text-sm text-zinc-500 mb-5">
+            {mode === "signup" ? "Already have an account?" : "Don't have an account?"}{" "}
+            <button
+              type="button"
+              onClick={() => {
+                setMode(mode === "signup" ? "signin" : "signup");
+                setFormError(null);
+              }}
+              className="text-steel-300 hover:text-steel-200 font-medium transition-colors"
+            >
+              {mode === "signup" ? "Sign in" : "Sign up"}
+            </button>
+          </div>
+
+          {/* Divider */}
+          <div className="flex items-center gap-3 mb-5">
+            <div className="h-px flex-1 bg-zinc-800" />
+            <span className="text-xs text-zinc-600 uppercase tracking-wider">or</span>
+            <div className="h-px flex-1 bg-zinc-800" />
           </div>
 
           <div className="space-y-3">
@@ -117,6 +230,16 @@ export default function LoginPage() {
               </svg>
               Continue with Discord
             </motion.a>
+
+            {process.env.NODE_ENV !== "production" && (
+              <a
+                href={devLoginUrl()}
+                className="flex items-center justify-center gap-2 w-full rounded-xl border border-dashed border-zinc-700 bg-zinc-900/40 px-4 py-3 text-sm text-zinc-400 hover:border-zinc-600 hover:text-zinc-200 transition-colors"
+              >
+                <Gamepad2 size={16} />
+                Continue as dev user (local only)
+              </a>
+            )}
           </div>
 
           <div className="mt-6 pt-6 border-t border-zinc-800">
@@ -137,9 +260,9 @@ export default function LoginPage() {
           className="mt-10 grid grid-cols-3 gap-4"
         >
           {[
-            { icon: "🎮", label: "Multi-Game" },
-            { icon: "📊", label: "Smart Stats" },
-            { icon: "🎯", label: "Daily Quests" },
+            { Icon: Gamepad2, label: "Multi-Game" },
+            { Icon: BarChart3, label: "Smart Stats" },
+            { Icon: Target, label: "Daily Quests" },
           ].map((item, i) => (
             <motion.div
               key={item.label}
@@ -148,7 +271,9 @@ export default function LoginPage() {
               transition={{ delay: 0.5 + i * 0.1 }}
               className="text-center p-3 rounded-xl bg-zinc-900/30 border border-zinc-800/50"
             >
-              <div className="text-2xl mb-1">{item.icon}</div>
+              <div className="mb-1.5 flex justify-center text-steel-300">
+                <item.Icon size={22} />
+              </div>
               <div className="text-xs text-zinc-500">{item.label}</div>
             </motion.div>
           ))}

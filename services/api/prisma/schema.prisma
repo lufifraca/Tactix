@@ -28,18 +28,20 @@ enum AuthProvider {
 // All other gameplay enums are now Strings to support dynamic imports
 
 model User {
-  id          String   @id @default(cuid())
-  email       String?  @unique
-  displayName String?
-  avatarUrl   String?
-  timezone    String?  // IANA timezone (e.g., "America/New_York"). Used for time-of-day analytics.
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id           String   @id @default(cuid())
+  email        String?  @unique
+  displayName  String?
+  avatarUrl    String?
+  passwordHash String?  // scrypt hash for email/password accounts; null for OAuth-only users
+  timezone     String?  // IANA timezone (e.g., "America/New_York"). Used for time-of-day analytics.
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   identities        Identity[]
   gameAccounts      GameAccount[]
   quests            Quest[]
   briefs            DailyBrief[]
+  coachReports      CoachReport[]
   rewards           Reward[]
   skillScores       SkillScore[]
   subscription      Subscription?
@@ -190,6 +192,23 @@ model DailyBrief {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, date])
+}
+
+// Cached AI coach report — generated at most once per UTC day per user so the
+// dashboard shows a stable read (and free users are capped to one generation/day).
+model CoachReport {
+  id        String   @id @default(cuid())
+  userId    String
+  date      DateTime
+  report    Json
+  source    String   @default("rules") // "ai" | "rules"
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, date])
+  @@index([userId, date])
 }
 
 model Reward {

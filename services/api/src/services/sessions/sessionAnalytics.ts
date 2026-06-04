@@ -14,6 +14,7 @@ import type {
   SessionLengthCategory,
 } from "@tactix/shared";
 import { detectAndStoreSessions, getCurrentLossStreak } from "./sessionDetection";
+import { getTimeOfDayBucket, getSessionLengthCategory } from "./buckets";
 
 // Constants for tilt detection
 const SIGNIFICANT_WIN_RATE_DROP = 0.15; // 15% drop is considered significant
@@ -72,24 +73,6 @@ function calculateWinRate(bucket: WinRateBucket): WinRateBucket {
     ...bucket,
     winRate: bucket.total > 0 ? bucket.wins / bucket.total : null,
   };
-}
-
-function getTimeOfDayBucket(hour: number): TimeOfDayBucket {
-  if (hour >= 6 && hour < 12) return "morning";
-  if (hour >= 12 && hour < 18) return "afternoon";
-  if (hour >= 18 && hour < 24) return "evening";
-  return "night"; // 0-6
-}
-
-function getDayOfWeek(date: Date): DayOfWeek {
-  const days: DayOfWeek[] = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
-  return days[date.getUTCDay()] as DayOfWeek;
-}
-
-function getSessionLengthCategory(matchCount: number): SessionLengthCategory {
-  if (matchCount <= 3) return "short";
-  if (matchCount <= 7) return "medium";
-  return "long";
 }
 
 function findBestAndWorst<T extends string>(

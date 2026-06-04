@@ -1,10 +1,17 @@
 import type { FastifyInstance } from "fastify";
 import openid from "openid";
+import { z } from "zod";
 import { env } from "../env";
 import { prisma } from "../prisma";
 import { signSessionToken, signState, verifyState } from "../auth/jwt";
 import { requireUser, type AuthedRequest } from "../auth/middleware";
 import { fetchJson, fetchWithRetries } from "../utils/http";
+import { hashPassword, verifyPassword } from "../utils/password";
+import {
+  loginRetryAfter,
+  recordLoginFailure,
+  clearLoginFailures,
+} from "../auth/authSecurity";
 
 function setSessionCookie(reply: any, token: string) {
   reply.setCookie("tx_session", token, {
@@ -111,6 +118,108 @@ async function upsertUserFromIdentity(opts: {
 }
 
 export async function authRoutes(app: FastifyInstance) {
+  // --- Dev-only quick login (no OAuth) ---
+  // Visit http://localhost:3001/auth/dev-login (optionally ?email=you@example.com)
+  // to upsert a user, set the session cookie, and bounce to the dashboard.
+  // Hard-disabled in production so it can never be an auth bypass in prod.
+  app.get("/dev-login", async (req, reply) => {
+    if (process.env.NODE_ENV === "production") {
+      return reply.code(404).send({ error: "Not found" });
+    }
+    const q = req.query as any;
+    const email = (typeof q.email === "string" && q.email.trim()) || "dev@tactix.local";
+
+    let user = await prisma.user.findUnique({ where: { email } });
+    if (!user) {
+      user = await prisma.user.create({ data: { email, displayName: "Dev User" } });
+    }
+
+    const token = signSessionToken(user.id);
+    setSessionCookie(reply, token);
+
+    const redirect = (typeof q.redirect === "string" && q.redirect) || `${env.WEB_BASE_URL}/dashboard`;
+    return reply.redirect(redirect);
+  });
+
+  // --- Email / password (no OAuth required) ---
+  function publicUser(u: { id: string; email: string | null; displayName: string | null; avatarUrl: string | null }) {
+    return { id: u.id, email: u.email, displayName: u.displayName, avatarUrl: u.avatarUrl };
+  }
+
+  // POST /auth/register  { email, password, displayName? }
+  app.post("/register", async (req, reply) => {
+    const Body = z.object({
+      email: z.string().email().transform((e) => e.trim().toLowerCase()),
+      password: z.string().min(8, "Password must be at least 8 characters").max(200),
+      displayName: z.string().trim().min(1).max(80).optional(),
+    });
+    const parsed = Body.safeParse((req as any).body);
+    if (!parsed.success) {
+      return reply.code(400).send({ error: parsed.error.issues[0]?.message ?? "Invalid input" });
+    }
+    const { email, password, displayName } = parsed.data;
+
+    const existing = await prisma.user.findUnique({ where: { email } });
+    if (existing) {
+      // Don't silently hijack an OAuth account that has no password set.
+      return reply.code(409).send({ error: "An account with this email already exists. Try signing in." });
+    }
+
+    const user = await prisma.user.create({
+      data: {
+        email,
+        displayName: displayName ?? email.split("@")[0],
+        passwordHash: hashPassword(password),
+      },
+    });
+
+    const token = signSessionToken(user.id);
+    setSessionCookie(reply, token);
+    return reply.code(201).send({ ok: true, user: publicUser(user) });
+  });
+
+  // POST /auth/login  { email, password }
+  app.post("/login", async (req, reply) => {
+    const Body = z.object({
+      email: z.string().email().transform((e) => e.trim().toLowerCase()),
+      password: z.string().min(1).max(200),
+    });
+    const parsed = Body.safeParse((req as any).body);
+    if (!parsed.success) {
+      return reply.code(400).send({ error: "Invalid email or password" });
+    }
+    const { email, password } = parsed.data;
+
+    // Brute-force throttle (per client IP).
+    const throttleKey = req.ip;
+    const retryAfter = await loginRetryAfter(throttleKey);
+    if (retryAfter != null) {
+      reply.header("Retry-After", String(retryAfter));
+      return reply.code(429).send({
+        error: `Too many sign-in attempts. Try again in ${Math.ceil(retryAfter / 60)} minute(s).`,
+      });
+    }
+
+    const user = await prisma.user.findUnique({ where: { email } });
+
+    if (user && !user.passwordHash) {
+      // Account exists but was created via an OAuth provider — guide the user there.
+      return reply.code(403).send({
+        error: "This email is registered with Google or Discord. Please sign in with that provider.",
+      });
+    }
+
+    if (!user || !verifyPassword(password, user.passwordHash)) {
+      await recordLoginFailure(throttleKey);
+      return reply.code(401).send({ error: "Invalid email or password" });
+    }
+
+    await clearLoginFailures(throttleKey);
+    const token = signSessionToken(user.id);
+    setSessionCookie(reply, token);
+    return reply.send({ ok: true, user: publicUser(user) });
+  });
+
   // --- Google ---
   app.get("/google/start", async (req, reply) => {
     const redirect = (req.query as any)?.redirect as string | undefined;
@@ -283,7 +392,7 @@ export async function authRoutes(app: FastifyInstance) {
     const state = signState({ p: "steam", uid: user.id, r: redirect ?? `${env.WEB_BASE_URL}/settings` }, 10);
 
     await new Promise<void>((resolve, reject) => {
-      relyingParty.authenticate("https://steamcommunity.com/openid", false, (err, authUrl) => {
+      relyingParty.authenticate("https://steamcommunity.com/openid", false, (err: any, authUrl: any) => {
         if (err || !authUrl) return reject(err ?? new Error("No authUrl"));
 
         // Steam doesn't preserve arbitrary query params well, so include our state in return_to.
@@ -325,7 +434,7 @@ export async function authRoutes(app: FastifyInstance) {
     );
 
     const assertion = await new Promise<{ claimedIdentifier?: string }>((resolve, reject) => {
-      rp.verifyAssertion(req.raw as any, (err, result) => {
+      rp.verifyAssertion(req.raw as any, (err: any, result: any) => {
         if (err) return reject(err);
         resolve(result ?? {});
       });

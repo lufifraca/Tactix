@@ -39,7 +39,7 @@ export function badgeSvg(params: {
   </g>
   <text x="256" y="340" font-family="Inter, system-ui, -apple-system, Segoe UI, Roboto" font-size="24" fill="#FFFFFF" text-anchor="middle">${esc(title)}</text>
   <text x="256" y="372" font-family="Inter, system-ui, -apple-system, Segoe UI, Roboto" font-size="14" fill="#FFFFFF" opacity="0.8" text-anchor="middle">${esc(subtitle)}</text>
-  <text x="256" y="420" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, \"Liberation Mono\", \"Courier New\", monospace" font-size="12" fill="#FFFFFF" opacity="0.6" text-anchor="middle">${esc(date)}</text>
+  <text x="256" y="420" font-family="monospace" font-size="12" fill="#FFFFFF" opacity="0.6" text-anchor="middle">${esc(date)}</text>
 </svg>`;
 }
 
@@ -63,8 +63,8 @@ export function cardSvg(params: {
   <text x="108" y="170" font-family="Inter, system-ui, -apple-system, Segoe UI, Roboto" font-size="54" fill="#FFFFFF">${esc(headline)}</text>
   <text x="108" y="232" font-family="Inter, system-ui, -apple-system, Segoe UI, Roboto" font-size="22" fill="#FFFFFF" opacity="0.85">${esc(subline)}</text>
 
-  <text x="108" y="338" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, \"Liberation Mono\", \"Courier New\", monospace" font-size="18" fill="#FFFFFF" opacity="0.75">${esc(statLine)}</text>
+  <text x="108" y="338" font-family="monospace" font-size="18" fill="#FFFFFF" opacity="0.75">${esc(statLine)}</text>
 
-  <text x="108" y="520" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, \"Liberation Mono\", \"Courier New\", monospace" font-size="14" fill="#FFFFFF" opacity="0.55">${esc(date)} · tactix</text>
+  <text x="108" y="520" font-family="monospace" font-size="14" fill="#FFFFFF" opacity="0.55">${esc(date)} · tactix</text>
 </svg>`;
 }

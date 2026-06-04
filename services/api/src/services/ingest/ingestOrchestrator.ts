@@ -2,6 +2,9 @@ import { prisma } from "../../prisma";
 import { extractErrorMessage } from "../../utils/http";
 import { ingestMarvelRivalsAccount } from "./marvelRivals/index.js";
 
+// How long to wait before re-fetching a user's Steam library (6 hours).
+const STEAM_LIBRARY_TTL_SECONDS = 6 * 60 * 60;
+
 export async function ingestGameAccount(gameAccountId: string) {
   const account = await prisma.gameAccount.findUnique({ where: { id: gameAccountId } });
   if (!account) return { ok: false, error: "Account not found" };
@@ -9,28 +12,44 @@ export async function ingestGameAccount(gameAccountId: string) {
   // Generic Provider Handling
   if (account.provider === "STEAM" && account.externalId) {
     try {
-      // Prototype: Ingest Library for every Steam account touch
-      // In production, this should be a separate job or rate-limited.
-      const { fetchSteamLibrary } = await import("./steam/library");
-      const { putObject } = await import("../storage");
+      // The Steam library rarely changes and the API is rate-limited, so we
+      // throttle re-fetches to at most once per STEAM_LIBRARY_TTL_SECONDS using
+      // a short-lived Redis lock. (Previously this ran on every account touch.)
+      const { redis } = await import("../../queue");
+      let shouldFetch = true;
+      if (redis) {
+        // SET NX returns null when the key already exists (i.e. fetched recently).
+        const acquired = await redis.set(
+          `steam_library_lock:${account.userId}`,
+          "1",
+          "EX",
+          STEAM_LIBRARY_TTL_SECONDS,
+          "NX"
+        );
+        shouldFetch = acquired === "OK";
+      }
 
-      const games = await fetchSteamLibrary(account.externalId);
-      const body = JSON.stringify({ games, date: new Date().toISOString() });
-      const key = `raw/steam_library/${account.userId}/${Date.now()}.json`;
+      if (shouldFetch) {
+        const { fetchSteamLibrary } = await import("./steam/library");
+        const { putObject } = await import("../storage");
 
-      await putObject({ key, body, contentType: "application/json", cacheControl: "private, max-age=0" });
+        const games = await fetchSteamLibrary(account.externalId);
+        const body = JSON.stringify({ games, date: new Date().toISOString() });
+        const key = `raw/steam_library/${account.userId}/${Date.now()}.json`;
 
-      // Also cache in Redis (fallback when S3 is not configured)
-      try {
-        const { redis } = await import("../../queue");
-        if (redis) {
-          await redis.set(`steam_library:${account.userId}`, body, "EX", 86400 * 7);
-        }
-      } catch (_) { /* non-fatal */ }
+        await putObject({ key, body, contentType: "application/json", cacheControl: "private, max-age=0" });
 
-      console.log(`Ingested Steam Lib for ${account.userId}: ${games.length} games`);
+        // Also cache the latest snapshot in Redis (fallback when S3 isn't configured).
+        try {
+          if (redis) {
+            await redis.set(`steam_library:${account.userId}`, body, "EX", 86400 * 7);
+          }
+        } catch (_) { /* non-fatal */ }
 
-      // TODO: In Phase 3, we will sync these to a Game/GameAccount table.
+        console.log(`Ingested Steam Lib for ${account.userId}: ${games.length} games`);
+      } else {
+        console.log(`[Ingest] Skipping Steam library for ${account.userId} (fetched recently)`);
+      }
     } catch (e) {
       console.error("Failed to ingest Steam library", e);
       // Don't fail the specific game ingest just because library failed

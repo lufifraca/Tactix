@@ -1,0 +1,42 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate Prisma client
+        run: pnpm --filter @tactix/api db:generate
+
+      # Note: @tactix/shared has no local typescript binary; its source is
+      # typechecked transitively as part of the api and web projects.
+      - name: Typecheck (api)
+        run: pnpm --filter @tactix/api typecheck
+
+      - name: Typecheck (web)
+        run: pnpm --filter @tactix/web typecheck
+
+      - name: Unit tests (api)
+        run: pnpm --filter @tactix/api test

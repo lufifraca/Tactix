@@ -1,5 +1,6 @@
 import { env } from "../../../env";
 import { fetchJson, fetchWithRetries } from "../../../utils/http";
+import { throttleHenrik } from "./henrikRateLimiter";
 
 /**
  * Henrik's unofficial Valorant API
@@ -11,8 +12,11 @@ import { fetchJson, fetchWithRetries } from "../../../utils/http";
 
 const BASE = "https://api.henrikdev.xyz";
 
-// Henrik API region slugs
-export type HenrikRegion = "eu" | "na" | "ap" | "kr";
+// Henrik API region slugs (matches the values the v2 mmr / v3 matches endpoints accept)
+export type HenrikRegion = "eu" | "na" | "ap" | "kr" | "br" | "latam";
+
+/** Valid Henrik region slugs, used to validate auto-detected regions. */
+export const HENRIK_REGIONS: readonly HenrikRegion[] = ["eu", "na", "ap", "kr", "br", "latam"];
 
 function getHeaders(): Record<string, string> {
   const headers: Record<string, string> = {};
@@ -40,15 +44,28 @@ export interface HenrikAccount {
   last_update_raw: number;
 }
 
-export interface HenrikMmr {
+/** The current-rank block. On the v2 MMR endpoint this lives under `data.current_data`. */
+export interface HenrikMmrCurrent {
   currenttier: number;
   currenttierpatched: string; // e.g. "Diamond 2"
   ranking_in_tier: number; // RR (0-100)
   mmr_change_to_last_game: number;
   elo: number;
+  games_needed_for_rating?: number;
+  old?: boolean;
+}
+
+/**
+ * v2 MMR response `data`. NOTE: unlike v1, the live rank fields are nested under
+ * `current_data` — reading them off the top level always yields `undefined`.
+ */
+export interface HenrikMmr {
   name: string;
   tag: string;
-  old: boolean;
+  puuid?: string;
+  current_data: HenrikMmrCurrent;
+  highest_rank?: { old: boolean; tier: number; patched_tier: string; season: string };
+  by_season?: Record<string, unknown>;
 }
 
 export interface HenrikMatchPlayer {
@@ -170,8 +187,10 @@ export async function henrikGetAccount(
   tag: string
 ): Promise<HenrikAccount> {
   const url = `${BASE}/valorant/v1/account/${encodeURIComponent(name)}/${encodeURIComponent(tag)}`;
-  const resp = await fetchWithRetries(() =>
-    fetchJson<{ status: number; data: HenrikAccount }>(url, { headers: getHeaders() })
+  const resp = await throttleHenrik(() =>
+    fetchWithRetries(() =>
+      fetchJson<{ status: number; data: HenrikAccount }>(url, { headers: getHeaders() })
+    )
   );
   return resp.data;
 }
@@ -185,25 +204,33 @@ export async function henrikGetMmr(
   tag: string
 ): Promise<HenrikMmr> {
   const url = `${BASE}/valorant/v2/mmr/${region}/${encodeURIComponent(name)}/${encodeURIComponent(tag)}`;
-  const resp = await fetchWithRetries(() =>
-    fetchJson<{ status: number; data: HenrikMmr }>(url, { headers: getHeaders() })
+  const resp = await throttleHenrik(() =>
+    fetchWithRetries(() =>
+      fetchJson<{ status: number; data: HenrikMmr }>(url, { headers: getHeaders() })
+    )
   );
   return resp.data;
 }
 
 /**
- * Get last matches (v3 returns full match details, up to 5 per call)
+ * Get last matches (v3 returns full match details).
+ * `size` defaults to the API's 5 but can be raised (the endpoint honors up to ~10).
  */
 export async function henrikGetMatches(
   region: HenrikRegion,
   name: string,
   tag: string,
-  mode?: "competitive" | "unrated" | "deathmatch" | "spikerush" | "swiftplay"
+  opts: { mode?: "competitive" | "unrated" | "deathmatch" | "spikerush" | "swiftplay"; size?: number } = {}
 ): Promise<HenrikMatch[]> {
-  let url = `${BASE}/valorant/v3/matches/${region}/${encodeURIComponent(name)}/${encodeURIComponent(tag)}`;
-  if (mode) url += `?mode=${mode}`;
-  const resp = await fetchWithRetries(() =>
-    fetchJson<{ status: number; data: HenrikMatch[] }>(url, { headers: getHeaders() })
+  const params = new URLSearchParams();
+  if (opts.mode) params.set("mode", opts.mode);
+  if (opts.size) params.set("size", String(opts.size));
+  const qs = params.toString();
+  const url = `${BASE}/valorant/v3/matches/${region}/${encodeURIComponent(name)}/${encodeURIComponent(tag)}${qs ? `?${qs}` : ""}`;
+  const resp = await throttleHenrik(() =>
+    fetchWithRetries(() =>
+      fetchJson<{ status: number; data: HenrikMatch[] }>(url, { headers: getHeaders() })
+    )
   );
   return resp.data;
 }
@@ -225,8 +252,10 @@ export async function henrikGetLifetimeMatches(
 
   const qs = params.toString();
   const url = `${BASE}/valorant/v1/lifetime/matches/${region}/${encodeURIComponent(name)}/${encodeURIComponent(tag)}${qs ? `?${qs}` : ""}`;
-  const resp = await fetchWithRetries(() =>
-    fetchJson<{ status: number; data: HenrikLifetimeMatch[] }>(url, { headers: getHeaders() })
+  const resp = await throttleHenrik(() =>
+    fetchWithRetries(() =>
+      fetchJson<{ status: number; data: HenrikLifetimeMatch[] }>(url, { headers: getHeaders() })
+    )
   );
   return resp.data;
 }

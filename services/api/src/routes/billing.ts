@@ -30,7 +30,7 @@ export async function billingRoutes(app: FastifyInstance) {
 
     const session = await stripe.checkout.sessions.create({
       mode: "subscription",
-      customer: customerId,
+      customer: customerId ?? undefined,
       line_items: [{ price: env.STRIPE_PRICE_ID_MONTHLY, quantity: 1 }],
       allow_promotion_codes: false,
       success_url: `${env.WEB_BASE_URL}/dashboard/settings?billing=success`,

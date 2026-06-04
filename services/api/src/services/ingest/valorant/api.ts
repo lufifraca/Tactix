@@ -24,6 +24,8 @@ export interface RiotAccount {
   puuid: string;
   gameName: string;
   tagLine: string;
+  /** Henrik-detected region slug (na/eu/ap/kr/br/latam), when available. */
+  region?: string;
 }
 
 export interface ValMatchInfo {
@@ -200,7 +202,9 @@ export async function validateRiotId(
     try {
       const { henrikGetAccount } = await import("./henrikApi");
       const account = await henrikGetAccount(name, tag);
-      return { puuid: account.puuid, gameName: account.name, tagLine: account.tag };
+      // Capture Henrik's auto-detected region — this is authoritative and avoids
+      // the user mis-picking a region (which makes match ingest silently return []).
+      return { puuid: account.puuid, gameName: account.name, tagLine: account.tag, region: account.region };
     } catch (e: any) {
       // If Henrik fails with 404, surface it clearly
       if (e.message?.includes("404") || e.message?.includes("not found")) {

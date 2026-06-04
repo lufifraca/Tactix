@@ -20,3 +20,30 @@ services:
       # S3_BUCKET, S3_ACCESS_KEY_ID, S3_SECRET_ACCESS_KEY, S3_PUBLIC_BASE_URL
       # GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REDIRECT_URI
       # (plus any game API keys you want)
+      #
+      # On the free plan the API container also runs the BullMQ worker embedded
+      # (scheduled stat polling + push notifications). Free web services spin down
+      # when idle, so the 30-min poll only fires while the service is awake — keep
+      # it warm with an external uptime pinger (e.g. cron-job.org hitting /health),
+      # or upgrade and run the dedicated worker below.
+
+  # Dedicated background worker — reliable scheduled ingestion + notifications.
+  # Render background workers require a paid plan. When you enable this, also set
+  # RUN_EMBEDDED_WORKER=false on the API service above so the worker isn't doubled.
+  - type: worker
+    name: tactix-worker
+    runtime: docker
+    plan: starter
+    dockerfilePath: ./Dockerfile
+    dockerCommand: sh -c 'npx prisma migrate deploy; node --import @swc-node/register/esm-register src/worker.ts'
+    envVars:
+      - key: NODE_ENV
+        value: production
+      # Must match the API's JWT_SECRET (shared encryption key) — pulled from it here:
+      - key: JWT_SECRET
+        fromService:
+          name: tactix-api
+          type: web
+          envVarKey: JWT_SECRET
+      # Set the SAME values as the API service (ideally via a shared Render
+      # Environment Group): DATABASE_URL, REDIS_URL, HENRIK_API_KEY, S3_*, etc.

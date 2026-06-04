@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="512" height="512">
+<defs><linearGradient id="steel" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1a2e4d"/><stop offset=".34" stop-color="#3a567c"/><stop offset=".52" stop-color="#9bafce"/><stop offset=".64" stop-color="#7991b5"/><stop offset=".82" stop-color="#34506f"/><stop offset="1" stop-color="#1c3050"/></linearGradient><linearGradient id="tile" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#161a24"/><stop offset="1" stop-color="#0b0d13"/></linearGradient><linearGradient id="edge" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".20"/><stop offset=".5" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#fff" stop-opacity=".05"/></linearGradient></defs>
+<rect x="2" y="2" width="96" height="96" rx="23.5" fill="url(#tile)"/>
+<path d="M50 36 L75 25 L64 50 L75 75 L50 64 L25 75 L36 50 L25 25 Z" fill="url(#steel)"/>
+<path d="M50 36 L75 25 L64 50 L75 75 L50 64 L25 75 L36 50 L25 25 Z" fill="none" stroke="url(#edge)" stroke-width="1.1"/>
+<circle cx="50" cy="50" r="8.4" fill="none" stroke="#b8c8e2" stroke-width="2" opacity=".82"/>
+<circle cx="50" cy="50" r="4" fill="#10131b"/>
+</svg>

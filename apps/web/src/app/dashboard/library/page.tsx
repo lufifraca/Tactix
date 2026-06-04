@@ -18,8 +18,8 @@ const gameConfig: Record<string, {
   MARVEL_RIVALS: {
     name: "Marvel Rivals",
     color: "#a855f7",
-    gradient: "from-purple-600 via-violet-600 to-pink-500",
-    glow: "shadow-purple-500/30",
+    gradient: "from-steel-700 via-violet-600 to-pink-500",
+    glow: "shadow-steel-600/30",
     coverImage: "https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/2767030/header.jpg",
     icon: "/marvel-rivals-icon.png",
     emoji: "🦸",
@@ -27,8 +27,8 @@ const gameConfig: Record<string, {
   CLASH_ROYALE: {
     name: "Clash Royale",
     color: "#3b82f6",
-    gradient: "from-blue-600 via-cyan-600 to-sky-500",
-    glow: "shadow-blue-500/30",
+    gradient: "from-steel-500 via-steel-500 to-sky-500",
+    glow: "shadow-steel-400/30",
     coverImage: "https://play-lh.googleusercontent.com/rIvZQ_H3hfmexC8vurmLczLtMNBFtxCg6JA8eMqk3k4FLHdLHTfQH1vqY4qSCFZCTQ=w526-h296-rw",
     icon: "",
     emoji: "🏰",
@@ -237,7 +237,7 @@ export default function GameLibraryPage() {
         className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8"
       >
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-white via-zinc-200 to-zinc-400 bg-clip-text text-transparent">
+          <h1 className="text-2xl sm:text-3xl font-display font-bold bg-gradient-to-r from-white via-zinc-200 to-zinc-400 bg-clip-text text-transparent">
             Game Library
           </h1>
           <p className="text-sm text-zinc-500 mt-1">
@@ -275,7 +275,7 @@ export default function GameLibraryPage() {
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              className="rounded-lg bg-gradient-to-r from-cyan-500 to-purple-600 px-4 py-2 text-sm font-medium text-white shadow-lg shadow-purple-500/20"
+              className="rounded-lg bg-gradient-to-r from-steel-400 to-steel-700 px-4 py-2 text-sm font-medium text-white shadow-lg shadow-steel-600/20"
             >
               Link More Games
             </motion.button>
@@ -318,7 +318,7 @@ export default function GameLibraryPage() {
               <motion.button
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
-                className="rounded-lg bg-gradient-to-r from-cyan-500 to-purple-600 px-6 py-3 text-white font-medium shadow-lg shadow-purple-500/20"
+                className="rounded-lg bg-gradient-to-r from-steel-400 to-steel-700 px-6 py-3 text-white font-medium shadow-lg shadow-steel-600/20"
               >
                 Link Your First Game
               </motion.button>
@@ -330,7 +330,7 @@ export default function GameLibraryPage() {
             {trackedGamesCount > 0 && (
               <div>
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="h-0.5 w-6 bg-gradient-to-r from-cyan-400 to-purple-500 rounded-full" />
+                  <div className="h-0.5 w-6 bg-gradient-to-r from-steel-300 to-steel-600 rounded-full" />
                   <h2 className="text-sm font-medium uppercase tracking-wider text-zinc-400">
                     Tracked Games ({trackedGamesCount})
                   </h2>
@@ -490,7 +490,7 @@ export default function GameLibraryPage() {
             {steamLibrary.length > 0 && (
               <div>
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="h-0.5 w-6 bg-gradient-to-r from-blue-400 to-cyan-400 rounded-full" />
+                  <div className="h-0.5 w-6 bg-gradient-to-r from-steel-300 to-steel-300 rounded-full" />
                   <h2 className="text-sm font-medium uppercase tracking-wider text-zinc-400">
                     Steam Library ({steamLibrary.length})
                   </h2>
@@ -506,7 +506,7 @@ export default function GameLibraryPage() {
                       className={`relative overflow-hidden rounded-xl border bg-zinc-900/50 backdrop-blur-sm hover:shadow-xl transition-all duration-300 ${
                         game.isFavorite
                           ? 'border-amber-500/50 hover:shadow-amber-500/10'
-                          : 'border-zinc-800/50 hover:shadow-blue-500/10'
+                          : 'border-zinc-800/50 hover:shadow-steel-400/10'
                       }`}
                     >
                       {/* Header Image Background */}
@@ -545,8 +545,8 @@ export default function GameLibraryPage() {
                             onClick={(e) => { e.stopPropagation(); togglePreference(game, 'wantTracking'); }}
                             className={`w-10 h-10 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center transition-colors ${
                               game.wantTracking
-                                ? 'bg-purple-500/90 text-white'
-                                : 'bg-zinc-900/70 text-zinc-400 hover:text-purple-400 hover:bg-zinc-800/90'
+                                ? 'bg-steel-600/90 text-white'
+                                : 'bg-zinc-900/70 text-zinc-400 hover:text-steel-500 hover:bg-zinc-800/90'
                             }`}
                             title={game.wantTracking ? 'Remove tracking request' : 'Request stat tracking'}
                           >
@@ -583,13 +583,13 @@ export default function GameLibraryPage() {
                                 {Math.round(game.playtimeMinutes / 60)}h total
                               </span>
                               {game.playtime2Weeks > 0 && (
-                                <span className="text-blue-400">
+                                <span className="text-steel-300">
                                   {(game.playtime2Weeks / 60).toFixed(1)}h recent
                                 </span>
                               )}
                             </div>
                             {game.wantTracking && (
-                              <div className="mt-2 flex items-center gap-1 text-xs text-purple-400">
+                              <div className="mt-2 flex items-center gap-1 text-xs text-steel-500">
                                 <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
                                   <path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                                 </svg>

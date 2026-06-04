@@ -327,6 +327,31 @@ export type CharacterBreakdownResponse = z.infer<typeof CharacterBreakdownRespon
 export const OnboardingState = z.enum(["NEEDS_GAME_LINK", "NEEDS_FIRST_INGEST", "COMPLETE"]);
 export type OnboardingState = z.infer<typeof OnboardingState>;
 
+// AI Coach
+export const CoachInsight = z.object({
+  icon: z.string(),
+  title: z.string(),
+  body: z.string(),
+  tone: z.enum(["positive", "warning", "neutral"]),
+});
+export type CoachInsight = z.infer<typeof CoachInsight>;
+
+export const CoachReport = z.object({
+  headline: z.string(),
+  insights: z.array(CoachInsight),
+  focus: z.string(),
+  source: z.enum(["ai", "rules"]),
+  generatedAt: z.string(),
+});
+export type CoachReport = z.infer<typeof CoachReport>;
+
+export const CoachResponse = z.object({
+  ok: z.boolean(),
+  report: CoachReport.optional(),
+  error: z.string().optional(),
+});
+export type CoachResponse = z.infer<typeof CoachResponse>;
+
 export const LinkedAccount = z.object({
   id: z.string(),
   game: z.string(),
@@ -338,6 +363,7 @@ export type LinkedAccount = z.infer<typeof LinkedAccount>;
 
 export const DashboardResponse = z.object({
   me: UserPublic,
+  isAdmin: z.boolean().optional(),
   subscriptionActive: z.boolean(),
   modeFilter: MatchMode,
   onboardingState: OnboardingState,

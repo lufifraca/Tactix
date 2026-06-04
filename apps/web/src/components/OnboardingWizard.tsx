@@ -115,11 +115,11 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
               initial={{ scale: 0.8 }}
               animate={{ scale: 1 }}
               transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
-              className="w-20 h-20 mx-auto rounded-2xl bg-gradient-to-br from-cyan-500 to-purple-600 flex items-center justify-center shadow-2xl shadow-purple-500/30 mb-8"
+              className="w-20 h-20 mx-auto rounded-2xl bg-gradient-to-br from-steel-400 to-steel-700 flex items-center justify-center shadow-2xl shadow-steel-600/30 mb-8"
             >
               <span className="text-4xl font-bold text-white">T</span>
             </motion.div>
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-white via-zinc-200 to-zinc-400 bg-clip-text text-transparent mb-4">
+            <h1 className="text-4xl font-display font-bold bg-gradient-to-r from-white via-zinc-200 to-zinc-400 bg-clip-text text-transparent mb-4">
               Welcome to Tactix
             </h1>
             <p className="text-zinc-400 text-lg mb-2">
@@ -132,7 +132,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
               whileHover={{ scale: 1.03 }}
               whileTap={{ scale: 0.97 }}
               onClick={() => setStep("link")}
-              className="px-8 py-3.5 rounded-xl bg-gradient-to-r from-cyan-500 to-purple-600 text-white font-semibold text-lg shadow-xl shadow-purple-500/25 hover:shadow-purple-500/40 transition-shadow"
+              className="px-8 py-3.5 rounded-xl bg-gradient-to-r from-steel-400 to-steel-700 text-white font-semibold text-lg shadow-xl shadow-steel-600/25 hover:shadow-steel-600/40 transition-shadow"
             >
               Get Started
             </motion.button>
@@ -227,7 +227,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                         whileTap={{ scale: 0.98 }}
                         onClick={handleLink}
                         disabled={linking || !inputValue.trim()}
-                        className="px-5 py-3 rounded-lg bg-gradient-to-r from-cyan-500 to-purple-600 text-white font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="px-5 py-3 rounded-lg bg-gradient-to-r from-steel-400 to-steel-700 text-white font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         {linking ? (
                           <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -288,7 +288,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
             className="max-w-md text-center"
             onAnimationComplete={() => handleSync()}
           >
-            <div className="w-16 h-16 mx-auto mb-6 border-3 border-zinc-700 border-t-cyan-500 rounded-full animate-spin" />
+            <div className="w-16 h-16 mx-auto mb-6 border-3 border-zinc-700 border-t-steel-400 rounded-full animate-spin" />
             <h2 className="text-2xl font-bold text-white mb-2">Pulling your stats</h2>
             <p className="text-zinc-500">
               This may take a moment. We&apos;re fetching your match history and computing your skill scores.
@@ -312,7 +312,7 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               transition={{ type: "spring", stiffness: 300, damping: 15 }}
-              className="w-16 h-16 mx-auto mb-6 rounded-full bg-gradient-to-br from-cyan-500 to-purple-600 flex items-center justify-center"
+              className="w-16 h-16 mx-auto mb-6 rounded-full bg-gradient-to-br from-steel-400 to-steel-700 flex items-center justify-center"
             >
               <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />

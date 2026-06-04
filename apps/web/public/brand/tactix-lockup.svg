@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 540 120" width="540" height="120">
+<defs><style>@import url('https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@700&display=swap');</style><linearGradient id="steel" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1a2e4d"/><stop offset=".34" stop-color="#3a567c"/><stop offset=".52" stop-color="#9bafce"/><stop offset=".64" stop-color="#7991b5"/><stop offset=".82" stop-color="#34506f"/><stop offset="1" stop-color="#1c3050"/></linearGradient><linearGradient id="tile" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#161a24"/><stop offset="1" stop-color="#0b0d13"/></linearGradient><linearGradient id="xg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7991ba"/><stop offset=".55" stop-color="#cfdcef"/><stop offset="1" stop-color="#6a85ad"/></linearGradient></defs>
+<g transform="translate(6,10)">
+  <rect x="2" y="2" width="96" height="96" rx="23.5" fill="url(#tile)"/>
+  <path d="M50 36 L75 25 L64 50 L75 75 L50 64 L25 75 L36 50 L25 25 Z" fill="url(#steel)"/>
+  <circle cx="50" cy="50" r="8.4" fill="none" stroke="#b8c8e2" stroke-width="2" opacity=".82"/>
+  <circle cx="50" cy="50" r="4" fill="#10131b"/>
+</g>
+<text x="130" y="84" font-family="'Chakra Petch',sans-serif" font-weight="700" font-size="76" letter-spacing="1" fill="#e8edf5">Tacti<tspan fill="url(#xg)">x</tspan></text>
+</svg>

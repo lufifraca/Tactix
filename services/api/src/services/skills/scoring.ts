@@ -1,47 +1,16 @@
 import { prisma } from "../../prisma";
 import type { SkillDomain } from "@tactix/shared";
+import {
+  clamp,
+  safeNum,
+  ratio,
+  mean,
+  stddev,
+  score01HigherBetter,
+  score01LowerBetter,
+} from "./scoringMath";
 
 type DomainScore = { domain: SkillDomain; score: number; details: Record<string, any>; attribution?: string[] };
-
-function clamp(x: number, min: number, max: number) {
-  return Math.max(min, Math.min(max, x));
-}
-
-function safeNum(v: any): number {
-  return typeof v === "number" && Number.isFinite(v) ? v : 0;
-}
-
-function ratio(a: number, b: number, fallback = 0): number {
-  if (b <= 0) return fallback;
-  return a / b;
-}
-
-function mean(xs: number[]) {
-  if (xs.length === 0) return 0;
-  return xs.reduce((a, b) => a + b, 0) / xs.length;
-}
-
-function stddev(xs: number[]) {
-  if (xs.length < 2) return 0;
-  const m = mean(xs);
-  const v = mean(xs.map((x) => (x - m) ** 2));
-  return Math.sqrt(v);
-}
-
-function score01HigherBetter(value: number, good: number, great: number) {
-  // map [good..great] -> [0.6..1.0], below good down to 0
-  if (value <= 0) return 0;
-  if (value <= good) return clamp(value / good, 0, 1) * 0.6;
-  if (value >= great) return 1;
-  return 0.6 + ((value - good) / (great - good)) * 0.4;
-}
-
-function score01LowerBetter(value: number, ok: number, great: number) {
-  // value <= great => 1, value >= ok => 0.6 down to 0
-  if (value <= great) return 1;
-  if (value >= ok) return clamp(1 - (value - ok) / ok, 0, 1) * 0.6;
-  return 0.6 + (1 - (value - great) / (ok - great)) * 0.4;
-}
 
 export async function computeCrossGameSkillScores(userId: string, mode: "ALL" | "RANKED" | "UNRANKED") {
   // v1: score from most recent 20 matches across all linked games.

@@ -53,6 +53,8 @@ const EnvSchema = z.object({
   // Henrik's unofficial Valorant API (https://docs.henrikdev.xyz)
   // Free tier: 30 req/min; get a key at https://api.henrikdev.xyz/dashboard/
   HENRIK_API_KEY: z.string().optional(),
+  // Max Henrik requests/minute to self-throttle to (defaults to 30 = basic tier).
+  HENRIK_RATE_LIMIT_PER_MIN: z.coerce.number().optional(),
 
   STRIPE_SECRET_KEY: z.string().optional(),
   STRIPE_WEBHOOK_SECRET: z.string().optional(),
@@ -61,6 +63,13 @@ const EnvSchema = z.object({
   OPENAI_API_KEY: z.string().optional(),
   OPENAI_MODEL: z.string().default("gpt-4o-mini"),
 
+  // Anthropic Claude (preferred provider for the AI coach)
+  ANTHROPIC_API_KEY: z.string().optional(),
+  ANTHROPIC_MODEL: z.string().default("claude-haiku-4-5-20251001"),
+
+  // Comma-separated list of emails allowed to use owner-only debug endpoints.
+  ADMIN_EMAILS: z.string().optional(),
+
   EXPO_ACCESS_TOKEN: z.string().optional(),
 
   MOBILE_DEEPLINK_SCHEME: z.string().default("tactix"),
@@ -68,6 +77,16 @@ const EnvSchema = z.object({
 
 export type Env = z.infer<typeof EnvSchema>;
 export const env: Env = EnvSchema.parse(process.env);
+
+/** Whether an email is allowed to use owner-only debug endpoints. */
+export function isAdminEmail(email?: string | null): boolean {
+  if (!email) return false;
+  const list = (env.ADMIN_EMAILS ?? "")
+    .split(",")
+    .map((s) => s.trim().toLowerCase())
+    .filter(Boolean);
+  return list.includes(email.toLowerCase());
+}
 console.log("ENV CHECK steam key present:", Boolean(process.env.STEAM_WEB_API_KEY));
 console.log("ENV CHECK riot key present:", Boolean(process.env.RIOT_API_KEY));
 console.log("ENV CHECK henrik key present:", Boolean(process.env.HENRIK_API_KEY));

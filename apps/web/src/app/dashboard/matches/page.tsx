@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { apiGet } from "@/lib/api";
 import { gameColors, gameShortLabels } from "@/lib/gameTheme";
+import { Gamepad2 } from "@/components/icons";
 
 const resultStyles: Record<string, { text: string; bg: string }> = {
   WIN:  { text: "text-emerald-400", bg: "bg-emerald-500/10" },
@@ -37,6 +38,7 @@ interface Pagination {
 interface MatchesResponse {
   matches: MatchEntry[];
   pagination: Pagination;
+  trackingSince: string | null;
 }
 
 // ─── Component ───────────────────────────────────────────────────
@@ -48,6 +50,7 @@ export default function MatchHistoryPage() {
   const [modeFilter, setModeFilter] = useState("ALL");
   const [resultFilter, setResultFilter] = useState("ALL");
   const [expandedMatch, setExpandedMatch] = useState<string | null>(null);
+  const [trackingSince, setTrackingSince] = useState<string | null>(null);
 
   const fetchMatches = useCallback(async (page = 1) => {
     setLoading(true);
@@ -62,6 +65,7 @@ export default function MatchHistoryPage() {
       const data = await apiGet<MatchesResponse>(`/dashboard/matches?${params}`);
       setMatches(data.matches);
       setPagination(data.pagination);
+      setTrackingSince(data.trackingSince);
     } catch (err) {
       console.error("Failed to load matches", err);
     } finally {
@@ -91,7 +95,14 @@ export default function MatchHistoryPage() {
     if (hours < 1) return "Just now";
     if (hours < 24) return `${hours}h ago`;
     if (days < 7) return `${days}d ago`;
-    return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+    // Include the year for matches from a previous year so old history (e.g. 2022)
+    // isn't ambiguous with recent matches.
+    const sameYear = d.getFullYear() === now.getFullYear();
+    return d.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      ...(sameYear ? {} : { year: "numeric" }),
+    });
   }
 
   function getStatLine(match: MatchEntry): string {
@@ -138,11 +149,16 @@ export default function MatchHistoryPage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-2xl font-bold bg-gradient-to-r from-white via-zinc-200 to-zinc-400 bg-clip-text text-transparent">
+          <h1 className="text-2xl font-display font-bold bg-gradient-to-r from-white via-zinc-200 to-zinc-400 bg-clip-text text-transparent">
             Match History
           </h1>
           <p className="text-sm text-zinc-500 mt-0.5">
             {pagination.total} matches tracked
+            {trackingSince && (
+              <span className="text-zinc-600">
+                {" · "}since {new Date(trackingSince).toLocaleDateString("en-US", { month: "short", year: "numeric" })}
+              </span>
+            )}
           </p>
         </div>
       </div>
@@ -192,11 +208,13 @@ export default function MatchHistoryPage() {
         {/* Match List */}
         {loading ? (
           <div className="flex items-center justify-center py-20">
-            <div className="w-8 h-8 border-2 border-zinc-700 border-t-cyan-500 rounded-full animate-spin" />
+            <div className="w-8 h-8 border-2 border-zinc-700 border-t-steel-400 rounded-full animate-spin" />
           </div>
         ) : matches.length === 0 ? (
           <div className="text-center py-20">
-            <div className="text-4xl mb-4">🎮</div>
+            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-zinc-800/70 text-zinc-500">
+              <Gamepad2 size={28} />
+            </div>
             <h2 className="text-lg font-semibold text-zinc-300 mb-2">No matches found</h2>
             <p className="text-sm text-zinc-500">
               {gameFilter !== "ALL" || resultFilter !== "ALL"

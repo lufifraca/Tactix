@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { gameColors, gameLabels } from "@/lib/gameTheme";
+import { gameIcon } from "@/lib/uiMaps";
 import { AnimatedCard } from "./AnimatedCard";
 import { AnimatedNumber } from "./AnimatedNumber";
 import { RankSparkline } from "./RankSparkline";
@@ -22,14 +23,6 @@ interface TrackedGameCardProps {
   delay?: number;
 }
 
-// Game logos - using placeholder emoji icons as fallback
-const gameIcons: Record<string, { emoji: string; hasLogo?: boolean }> = {
-  MARVEL_RIVALS: { emoji: "🦸" },
-  VALORANT: { emoji: "🎯" },
-  CLASH_ROYALE: { emoji: "🏰" },
-  BRAWL_STARS: { emoji: "💥" },
-};
-
 export function TrackedGameCard({ game, displayName, provider, rank, delay = 0 }: TrackedGameCardProps) {
   const [history, setHistory] = useState<{ rankNumeric: number | null; capturedAt: string }[]>([]);
 
@@ -42,7 +35,7 @@ export function TrackedGameCard({ game, displayName, provider, rank, delay = 0 }
   }, [game, rank?.rankNumeric]);
 
   const colors = gameColors[game] || gameColors.MARVEL_RIVALS;
-  const icon = gameIcons[game] || { emoji: "🎮" };
+  const Icon = gameIcon(game);
 
   return (
     <AnimatedCard
@@ -53,10 +46,10 @@ export function TrackedGameCard({ game, displayName, provider, rank, delay = 0 }
       <div className="flex items-start gap-3">
         {/* Game Icon */}
         <div
-          className="w-12 h-12 rounded-lg flex items-center justify-center text-2xl shrink-0"
-          style={{ backgroundColor: `${colors.primary}20` }}
+          className="w-12 h-12 rounded-lg flex items-center justify-center shrink-0"
+          style={{ backgroundColor: `${colors.primary}20`, color: colors.primary }}
         >
-          {icon.emoji}
+          <Icon size={24} />
         </div>
 
         <div className="flex-1 min-w-0">

@@ -155,7 +155,7 @@ export default function SkillDetailPage() {
         animate={{ opacity: 1, y: 0 }}
         className="mb-8"
       >
-        <h1 className="text-3xl font-bold bg-gradient-to-r from-white via-zinc-200 to-zinc-400 bg-clip-text text-transparent">
+        <h1 className="text-3xl font-display font-bold bg-gradient-to-r from-white via-zinc-200 to-zinc-400 bg-clip-text text-transparent">
           {domainName}
         </h1>
         <p className="text-sm text-zinc-500 mt-1">Detailed skill analysis</p>
@@ -169,7 +169,7 @@ export default function SkillDetailPage() {
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ delay: 0.2, duration: 0.4 }}
-              className="text-6xl font-bold bg-gradient-to-r from-cyan-400 to-purple-500 bg-clip-text text-transparent"
+              className="text-6xl font-bold bg-gradient-to-r from-steel-300 to-steel-600 bg-clip-text text-transparent"
             >
               {data.score}
             </motion.div>
@@ -182,7 +182,7 @@ export default function SkillDetailPage() {
                   initial={{ width: 0 }}
                   animate={{ width: `${data.score}%` }}
                   transition={{ duration: 1, delay: 0.3, ease: "easeOut" }}
-                  className="h-full rounded-full bg-gradient-to-r from-cyan-500 to-purple-500"
+                  className="h-full rounded-full bg-gradient-to-r from-steel-400 to-steel-600"
                   style={{ boxShadow: "0 0 20px rgba(6, 182, 212, 0.5)" }}
                 />
               </div>
@@ -274,7 +274,7 @@ export default function SkillDetailPage() {
                           <span className="text-zinc-600 mx-1">/</span>
                           <span className="text-red-400">{m.stats.deaths}</span>
                           <span className="text-zinc-600 mx-1">/</span>
-                          <span className="text-blue-400">{m.stats.assists || 0}</span>
+                          <span className="text-steel-300">{m.stats.assists || 0}</span>
                         </div>
                       )}
                       {m.stats?.crowns !== undefined && (

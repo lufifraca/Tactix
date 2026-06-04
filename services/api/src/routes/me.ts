@@ -244,6 +244,10 @@ export async function meRoutes(app: FastifyInstance) {
             gameStats.trioVictories = meta.trioVictories;
           }
         } else if (account.game === "VALORANT") {
+          // Avg match duration is unreliable for Valorant — backfilled history
+          // from the lifetime endpoint has no duration (stored as 0), which drags
+          // the average down. Drop it rather than show a misleading number.
+          delete gameStats.avgMatchDuration;
           gameStats.totalKills = totalKills;
           gameStats.totalDeaths = totalDeaths;
           gameStats.totalAssists = totalAssists;

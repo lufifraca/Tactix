@@ -17,6 +17,10 @@ A cross-game analytics and coaching platform that helps competitive gamers track
 - **Brawl Stars** - Brawler stats via Supercell API
 - **Steam Library** - Import and track your full game library
 
+### AI Coach
+- **Natural-language insights** - Turns your raw stats into a personalized read: when you play best, when you tilt, your strongest/weakest skill areas, and one concrete focus for the week
+- **Provider-agnostic** - Prefers Anthropic Claude, falls back to OpenAI, and falls back again to a deterministic rules engine, so insights render even with **no API key configured**
+
 ### Analytics Dashboard
 - **Today's Performance** - Real-time win rate, K/D/A, and time played
 - **Session Intelligence** - Best time of day, optimal session length, tilt detection
@@ -43,7 +47,7 @@ A cross-game analytics and coaching platform that helps competitive gamers track
 | Backend | Fastify, Prisma ORM, PostgreSQL |
 | Queue | BullMQ, Redis (Upstash) |
 | Storage | S3-compatible (MinIO local, Tigris production) |
-| Auth | Google OAuth, Steam OpenID |
+| Auth | Email/Password, Google & Discord OAuth, Steam OpenID |
 | Payments | Stripe Checkout + Customer Portal |
 | Monitoring | Sentry |
 | Deployment | Vercel (web), Render (API), Neon (DB) |
@@ -161,6 +165,7 @@ pnpm --filter @tactix/web dev
 | GET | `/me` | Current user info |
 | GET | `/me/library` | Game library with stats |
 | GET | `/dashboard` | Full dashboard data |
+| GET | `/dashboard/coach` | AI Coach insights (AI or rules-based) |
 | POST | `/ingest/refresh` | Trigger stat sync |
 | POST | `/link/marvel` | Link Marvel Rivals account |
 | POST | `/link/valorant` | Link Valorant account |
@@ -193,9 +198,31 @@ STRIPE_SECRET_KEY=
 STRIPE_WEBHOOK_SECRET=
 STRIPE_PRICE_ID_MONTHLY=
 
+# AI Coach (all optional — degrades to a deterministic rules engine)
+ANTHROPIC_API_KEY=
+ANTHROPIC_MODEL=claude-haiku-4-5-20251001
+OPENAI_API_KEY=
+
+# Owner-only debug endpoints (comma-separated emails)
+ADMIN_EMAILS=
+
 # Monitoring
 SENTRY_DSN=
 ```
+
+## Testing & CI
+
+Unit tests cover the pure analytics logic (skill scoring math, quest progress
+evaluation, session detection, and time/day/length bucketing). They use Node's
+built-in test runner via `tsx` — no extra dependencies.
+
+```bash
+pnpm --filter @tactix/api test
+```
+
+A GitHub Actions workflow (`.github/workflows/ci.yml`) runs on every push/PR to
+`main`: it installs dependencies, generates the Prisma client, typechecks
+`shared`, `api`, and `web`, then runs the API unit tests.
 
 ## Development
 
@@ -203,11 +230,12 @@ SENTRY_DSN=
 
 This project was built with assistance from [Claude](https://claude.ai) (Anthropic's AI assistant). Claude helped with:
 
-- **Feature implementation** - Building out dashboard components, quest systems, and analytics displays
-- **Bug fixes & debugging** - Resolving UI issues like text truncation, color theming, and stat display logic
-- **API integrations** - Connecting to game APIs (Marvel Rivals, Valorant, Supercell, Steam)
-- **Code refactoring** - Improving component structure and handling edge cases
-- **Stripe integration** - Setting up billing portal flows and subscription handling
+- **Authentication** - Email/password accounts alongside Google & Discord OAuth, with brute-force-throttled login
+- **Brand & UI** - A cohesive design system (the "Steel Star" mark, Chakra Petch type, custom palette) and a top-tab dashboard navigation
+- **Data ingestion** - A resilient Valorant pipeline over the Henrik API: automatic region detection, request rate-limiting, and paginated history backfill
+- **Analytics & coaching** - Cross-game skill scoring, session intelligence, daily quests, and an AI coach that degrades gracefully to a deterministic rules engine
+- **Shareable rewards** - Server-side SVG → PNG badge and share-card generation
+- **Reliability** - Background polling worker, daily-cached coach reports, and unit tests over the core analytics, auth, and rendering logic
 
 The collaborative workflow involved iterating on features through conversation, with Claude providing code suggestions and fixes that were reviewed and integrated into the codebase.
 

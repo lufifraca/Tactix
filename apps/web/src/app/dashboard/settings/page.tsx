@@ -34,7 +34,7 @@ export default function SettingsPage() {
   const [scGame, setScGame] = useState("CLASH_ROYALE");
   const [scTag, setScTag] = useState("");
   const [valRiotId, setValRiotId] = useState("");
-  const [valRegion, setValRegion] = useState("americas");
+  const [valRegion, setValRegion] = useState("auto");
   const [msg, setMsg] = useState<{ text: string; type: "success" | "error" } | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -105,7 +105,10 @@ export default function SettingsPage() {
       return;
     }
     try {
-      const res = await apiPost<{ displayName: string }>("/link/valorant", { riotId: valRiotId, region: valRegion });
+      const res = await apiPost<{ displayName: string }>("/link/valorant", {
+        riotId: valRiotId,
+        ...(valRegion !== "auto" ? { region: valRegion } : {}),
+      });
       showMessage(`Linked Valorant: ${res.displayName}`, "success");
       setValRiotId("");
       await load();
@@ -184,7 +187,7 @@ export default function SettingsPage() {
         animate={{ opacity: 1, y: 0 }}
         className="mb-8"
       >
-        <h1 className="text-3xl font-bold bg-gradient-to-r from-white via-zinc-200 to-zinc-400 bg-clip-text text-transparent">
+        <h1 className="text-3xl font-display font-bold bg-gradient-to-r from-white via-zinc-200 to-zinc-400 bg-clip-text text-transparent">
           Settings
         </h1>
         <p className="text-sm text-zinc-500 mt-1">Manage your account and linked games</p>
@@ -229,7 +232,7 @@ export default function SettingsPage() {
             className={`px-4 py-2 rounded-lg font-medium text-sm ${
               me?.subscriptionActive
                 ? "border border-zinc-700 text-zinc-300 hover:bg-zinc-800"
-                : "bg-gradient-to-r from-cyan-500 to-purple-600 text-white shadow-lg shadow-purple-500/20"
+                : "bg-gradient-to-r from-steel-400 to-steel-700 text-white shadow-lg shadow-steel-600/20"
             }`}
           >
             {me?.subscriptionActive ? "Manage Billing" : "Upgrade to Pro ($4.99/mo)"}
@@ -340,7 +343,7 @@ export default function SettingsPage() {
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               onClick={linkMarvel}
-              className="w-full px-4 py-2.5 rounded-lg bg-gradient-to-r from-purple-500 to-pink-600 text-white font-medium shadow-lg shadow-purple-500/20"
+              className="w-full px-4 py-2.5 rounded-lg bg-gradient-to-r from-steel-600 to-pink-600 text-white font-medium shadow-lg shadow-steel-600/20"
             >
               Link Marvel Rivals
             </motion.button>
@@ -368,6 +371,7 @@ export default function SettingsPage() {
                 onChange={(e) => setValRegion(e.target.value)}
                 className="rounded-lg bg-zinc-950 border border-zinc-800 px-4 py-3 text-sm text-white focus:border-zinc-600 focus:outline-none transition-colors"
               >
+                <option value="auto">Auto-detect</option>
                 <option value="americas">Americas</option>
                 <option value="europe">Europe</option>
                 <option value="asia">Asia</option>
@@ -414,7 +418,7 @@ export default function SettingsPage() {
             onClick={linkSupercell}
             className={`w-full px-4 py-2.5 rounded-lg font-medium shadow-lg text-white ${
               scGame === "CLASH_ROYALE"
-                ? "bg-gradient-to-r from-blue-500 to-cyan-600 shadow-blue-500/20"
+                ? "bg-gradient-to-r from-steel-400 to-steel-500 shadow-steel-400/20"
                 : "bg-gradient-to-r from-green-500 to-lime-600 shadow-green-500/20"
             }`}
           >

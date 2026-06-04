@@ -25,7 +25,9 @@ export async function GET(req: NextRequest) {
     path: "/",
     httpOnly: true,
     sameSite: "lax",
-    secure: true,
+    // Must NOT be Secure in local dev: browsers silently drop Secure cookies over
+    // plain http://localhost, which would break OAuth login on the dev machine.
+    secure: process.env.NODE_ENV === "production",
     maxAge: 60 * 60 * 24 * 30, // 30 days
   });
 

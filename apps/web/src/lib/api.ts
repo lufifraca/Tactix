@@ -38,6 +38,23 @@ export async function getDashboard(mode: "ALL" | "RANKED" | "UNRANKED" = "ALL") 
   return apiGet<DashboardResponse>(`/dashboard?mode=${mode}`);
 }
 
+export interface AuthUser {
+  id: string;
+  email: string | null;
+  displayName: string | null;
+  avatarUrl: string | null;
+}
+
+/** Create an account with email + password. Sets the session cookie on success. */
+export async function registerWithPassword(email: string, password: string, displayName?: string) {
+  return apiPost<{ ok: boolean; user: AuthUser }>("/auth/register", { email, password, displayName });
+}
+
+/** Sign in with email + password. Sets the session cookie on success. */
+export async function loginWithPassword(email: string, password: string) {
+  return apiPost<{ ok: boolean; user: AuthUser }>("/auth/login", { email, password });
+}
+
 export function authUrl(provider: "google" | "discord") {
   const origin = typeof window !== "undefined" ? window.location.origin : "";
   const redirect = encodeURIComponent(`${origin}/dashboard`);
@@ -48,6 +65,14 @@ export function steamLinkUrl() {
   const origin = typeof window !== "undefined" ? window.location.origin : "";
   const redirect = encodeURIComponent(`${origin}/dashboard/settings`);
   return `${API_BASE}/auth/steam/start?redirect=${redirect}`;
+}
+
+/** Dev-only one-click login. Points at the API's dev-login route (port 3001),
+ *  which is disabled in production. */
+export function devLoginUrl(redirectPath = "/dashboard") {
+  const origin = typeof window !== "undefined" ? window.location.origin : "http://localhost:3000";
+  const redirect = encodeURIComponent(`${origin}${redirectPath}`);
+  return `${API_BASE}/auth/dev-login?redirect=${redirect}`;
 }
 
 export async function getRankHistory(game: string, limit = 30) {

@@ -10,10 +10,11 @@ export async function linkMarvelRivals(username: string, platform = "pc") {
   });
 }
 
-export async function linkValorant(riotId: string, region = "americas") {
+/** region omitted = auto-detect from the account (recommended). */
+export async function linkValorant(riotId: string, region?: string) {
   return apiPost<{ displayName: string }>("/link/valorant", {
     riotId,
-    region,
+    ...(region ? { region } : {}),
   });
 }
 

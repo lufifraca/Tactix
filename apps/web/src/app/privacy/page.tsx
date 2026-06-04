@@ -18,7 +18,7 @@ export default function PrivacyPage() {
             &larr; Back to Tactix
           </Link>
 
-          <h1 className="mt-8 text-4xl font-bold bg-gradient-to-r from-white to-zinc-400 bg-clip-text text-transparent">
+          <h1 className="mt-8 text-4xl font-display font-bold bg-gradient-to-r from-white to-zinc-400 bg-clip-text text-transparent">
             Privacy Policy
           </h1>
           <p className="mt-2 text-sm text-zinc-500">Last updated: January 2025</p>
@@ -117,7 +117,7 @@ export default function PrivacyPage() {
               <h2 className="text-xl font-semibold text-white mb-3">10. Contact Us</h2>
               <p className="text-zinc-400">
                 If you have questions about this Privacy Policy or your data, please contact us at{" "}
-                <a href="mailto:support@tactix.gg" className="text-cyan-400 hover:text-cyan-300">
+                <a href="mailto:support@tactix.gg" className="text-steel-300 hover:text-steel-200">
                   support@tactix.gg
                 </a>
               </p>
@@ -127,7 +127,7 @@ export default function PrivacyPage() {
           <div className="mt-12 pt-8 border-t border-zinc-800">
             <Link
               href="/terms"
-              className="text-cyan-400 hover:text-cyan-300 transition-colors"
+              className="text-steel-300 hover:text-steel-200 transition-colors"
             >
               View Terms of Service &rarr;
             </Link>

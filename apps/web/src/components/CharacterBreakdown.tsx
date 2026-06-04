@@ -6,6 +6,7 @@ import { gameColors, gameLabels } from "@/lib/gameTheme";
 import { getCharacterBreakdown, type CharacterStatClient } from "@/lib/api";
 import { SectionHeader } from "./SectionHeader";
 import { AnimatedCard } from "./AnimatedCard";
+import { Gamepad2 } from "./icons";
 
 type GameFilter = "ALL" | "MARVEL_RIVALS" | "VALORANT";
 
@@ -41,7 +42,7 @@ export function CharacterBreakdown() {
 
   return (
     <section className="mt-8">
-      <SectionHeader title="Hero / Agent Breakdown" subtitle={totalGames > 0 ? `${totalGames} matches` : undefined} />
+      <SectionHeader title="Hero / Agent Breakdown" subtitle={totalGames > 0 ? `${totalGames} matches` : undefined} icon={Gamepad2} />
 
       {/* Game filter tabs */}
       <div className="flex gap-1 mb-4 p-1 rounded-lg bg-zinc-900/50 border border-zinc-800/50 w-fit">
@@ -131,7 +132,7 @@ export function CharacterBreakdown() {
                         <span className="text-red-400 font-medium">{char.avgDeaths}</span> D
                       </span>
                       <span className="text-zinc-500">
-                        <span className="text-blue-400 font-medium">{char.avgAssists}</span> A
+                        <span className="text-steel-300 font-medium">{char.avgAssists}</span> A
                       </span>
                     </div>
                   )}
