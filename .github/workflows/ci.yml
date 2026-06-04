@@ -9,6 +9,13 @@ on:
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
+    # Placeholder values so env.ts (zod) parses when the unit tests import the
+    # API modules. The tests are pure — Prisma/Redis are instantiated lazily and
+    # never actually connected to here.
+    env:
+      JWT_SECRET: ci-placeholder-secret-not-used-anywhere
+      DATABASE_URL: postgresql://user:pass@localhost:5432/tactix_test
+      REDIS_URL: redis://localhost:6379
     steps:
       - name: Checkout
         uses: actions/checkout@v4
