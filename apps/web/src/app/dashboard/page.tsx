@@ -92,21 +92,12 @@ export default function DashboardPage() {
     setRefreshing(true);
     setRefreshMsg(null);
     try {
-      const res = await apiPost<{ ok: boolean; result: { ok: boolean; results: Array<{ ok: boolean; game?: string; inserted?: number; error?: string }> } }>("/ingest/refresh");
-      const results = res?.result?.results ?? [];
-      const failed = results.filter((r) => !r.ok);
-      const succeeded = results.filter((r) => r.ok);
-
-      if (failed.length > 0 && succeeded.length === 0) {
-        setRefreshMsg({ type: "error", text: failed.map((f) => `${f.game}: ${f.error || "unknown error"}`).join(" · ") });
-      } else if (failed.length > 0) {
-        const inserted = succeeded.reduce((s, r) => s + (r.inserted ?? 0), 0);
-        setRefreshMsg({ type: "warn", text: `${inserted} new matches. Failed: ${failed.map((f) => `${f.game}: ${f.error || "unknown error"}`).join(", ")}` });
-      } else if (succeeded.length > 0) {
-        const inserted = succeeded.reduce((s, r) => s + (r.inserted ?? 0), 0);
-        setRefreshMsg({ type: "success", text: inserted > 0 ? `Synced ${inserted} new match${inserted === 1 ? "" : "es"}` : "All games up to date" });
-      }
-      await load();
+      // Ingestion now runs in the background server-side (a full sync can exceed
+      // the request timeout), so we just kick it off and reload as results land.
+      await apiPost("/ingest/refresh");
+      setRefreshMsg({ type: "success", text: "Syncing… new matches will appear in a moment (can take up to a minute)." });
+      setTimeout(() => { load(); }, 8000);
+      setTimeout(() => { load(); }, 25000);
     } catch (e: any) {
       setRefreshMsg({ type: "error", text: e?.message ?? "Refresh failed" });
       await load();

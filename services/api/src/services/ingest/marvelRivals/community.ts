@@ -1,5 +1,10 @@
 import { env } from "../../../env";
-import { fetchJson, fetchWithRetries } from "../../../utils/http";
+import { fetchJson } from "../../../utils/http";
+
+// The community API is unofficial and frequently slow/unresponsive. Use a short
+// timeout and no retries so a hanging endpoint fails in seconds instead of
+// stacking 15s timeouts across multiple strategies into 100s+.
+const MARVEL_TIMEOUT_MS = 8_000;
 
 export type MarvelMatchHistoryV2 = {
   match_history: any[];
@@ -26,7 +31,7 @@ export async function fetchMarvelMatchHistoryCommunity(params: {
     "x-api-key": env.MARVEL_RIVALS_API_KEY,
   };
 
-  return fetchWithRetries(() => fetchJson<MarvelMatchHistoryV2>(url.toString(), { headers }));
+  return fetchJson<MarvelMatchHistoryV2>(url.toString(), { headers, timeoutMs: MARVEL_TIMEOUT_MS });
 }
 
 /**
@@ -41,7 +46,7 @@ export async function fetchMarvelPlayerProfile(username: string): Promise<any> {
 
   // Try v2 first
   try {
-    const v2 = await fetchJson<any>(`https://marvelrivalsapi.com/api/v2/player/${encoded}`, { headers });
+    const v2 = await fetchJson<any>(`https://marvelrivalsapi.com/api/v2/player/${encoded}`, { headers, timeoutMs: MARVEL_TIMEOUT_MS });
     if (v2 && Object.keys(v2).length > 0) return v2;
   } catch {
     // v2 failed, try v1
@@ -49,7 +54,7 @@ export async function fetchMarvelPlayerProfile(username: string): Promise<any> {
 
   // Fall back to v1 (confirmed to have rank.rank, info.rank_game_season)
   try {
-    return await fetchJson<any>(`https://marvelrivalsapi.com/api/v1/player/${encoded}`, { headers });
+    return await fetchJson<any>(`https://marvelrivalsapi.com/api/v1/player/${encoded}`, { headers, timeoutMs: MARVEL_TIMEOUT_MS });
   } catch (e) {
     console.error("[Marvel Rivals] Player profile fetch failed on both v2 and v1:", e);
     return null;
