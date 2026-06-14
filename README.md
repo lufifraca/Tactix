@@ -35,9 +35,9 @@ A cross-game analytics and coaching platform that helps competitive gamers track
 
 ### Infrastructure
 - **Real-time Sync** - Manual refresh + auto-refresh on stale data
-- **Background Polling** - Scheduled stat ingestion via BullMQ
+- **Background Polling** - Scheduled in-process stat ingestion every 30 min (BullMQ + Redis wired in for a dedicated worker at scale)
 - **Subscription System** - Stripe integration for Pro tier ($4.99/mo)
-- **Error Monitoring** - Sentry integration for production
+- **Error Monitoring** - Sentry for frontend errors in production
 
 ## Tech Stack
 
@@ -149,8 +149,8 @@ pnpm --filter @tactix/web dev
 ### Render (Backend)
 1. Use `render.yaml` for infrastructure-as-code
 2. Or manually create:
-   - Web Service for API (`services/api`)
-   - Background Worker for polling
+   - Web Service for API (`services/api`) — also runs the periodic poll in-process
+   - (Optional) Background Worker (`worker:start`) to offload polling/jobs at scale
 3. Add all API environment variables
 
 ### Database
@@ -235,7 +235,7 @@ This project was built with assistance from [Claude](https://claude.ai) (Anthrop
 - **Data ingestion** - A resilient Valorant pipeline over the Henrik API: automatic region detection, request rate-limiting, and paginated history backfill
 - **Analytics & coaching** - Cross-game skill scoring, session intelligence, daily quests, and an AI coach that degrades gracefully to a deterministic rules engine
 - **Shareable rewards** - Server-side SVG → PNG badge and share-card generation
-- **Reliability** - Background polling worker, daily-cached coach reports, and unit tests over the core analytics, auth, and rendering logic
+- **Reliability** - In-process background polling, daily-cached coach reports, and unit tests over the core analytics, auth, and rendering logic
 
 The collaborative workflow involved iterating on features through conversation, with Claude providing code suggestions and fixes that were reviewed and integrated into the codebase.
 
