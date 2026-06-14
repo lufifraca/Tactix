@@ -19,7 +19,7 @@ A cross-game analytics and coaching platform that helps competitive gamers track
 
 ### AI Coach
 - **Natural-language insights** - Turns your raw stats into a personalized read: when you play best, when you tilt, your strongest/weakest skill areas, and one concrete focus for the week
-- **Provider-agnostic** - Prefers Anthropic Claude, falls back to OpenAI, and falls back again to a deterministic rules engine, so insights render even with **no API key configured**
+- **Graceful AI fallback** - Uses OpenAI for insights, then falls back to a deterministic rules engine, so insights render even with **no API key configured**
 
 ### Analytics Dashboard
 - **Today's Performance** - Real-time win rate, K/D/A, and time played
@@ -198,10 +198,9 @@ STRIPE_SECRET_KEY=
 STRIPE_WEBHOOK_SECRET=
 STRIPE_PRICE_ID_MONTHLY=
 
-# AI Coach (all optional — degrades to a deterministic rules engine)
-ANTHROPIC_API_KEY=
-ANTHROPIC_MODEL=claude-haiku-4-5-20251001
+# AI Coach (optional — degrades to a deterministic rules engine)
 OPENAI_API_KEY=
+OPENAI_MODEL=gpt-4o-mini
 
 # Owner-only debug endpoints (comma-separated emails)
 ADMIN_EMAILS=

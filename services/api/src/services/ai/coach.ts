@@ -233,7 +233,7 @@ export function buildRulesReport(s: CoachSnapshot): CoachReport {
   };
 }
 
-// ── AI enhancement (Claude/OpenAI), with graceful fallback ───────────────────
+// ── AI enhancement (OpenAI), with graceful fallback ───────────────────
 const SYSTEM = `You are Tactix Coach, a sharp, encouraging esports performance coach.
 You are given a JSON snapshot of one player's recent stats across multiple games.
 Return ONLY valid JSON of this exact shape:

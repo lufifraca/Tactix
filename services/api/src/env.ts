@@ -64,10 +64,6 @@ const EnvSchema = z.object({
   OPENAI_API_KEY: z.string().optional(),
   OPENAI_MODEL: z.string().default("gpt-4o-mini"),
 
-  // Anthropic Claude (preferred provider for the AI coach)
-  ANTHROPIC_API_KEY: z.string().optional(),
-  ANTHROPIC_MODEL: z.string().default("claude-haiku-4-5-20251001"),
-
   // Comma-separated list of emails allowed to use owner-only debug endpoints.
   ADMIN_EMAILS: z.string().optional(),
 

@@ -594,7 +594,7 @@ export async function dashboardRoutes(app: FastifyInstance) {
   });
 
   // AI Coach — natural-language insights derived from the user's stats.
-  // Uses Claude/OpenAI when configured, otherwise a deterministic rules engine.
+  // Uses OpenAI when configured, otherwise a deterministic rules engine.
   //
   // The report is generated at most once per UTC day per user and cached, so the
   // dashboard shows a stable read instead of a fresh (and differently-worded)
