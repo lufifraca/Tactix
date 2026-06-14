@@ -21,13 +21,18 @@ let timer: ReturnType<typeof setInterval> | null = null;
  * Called once from index.ts after the server boots.
  */
 export function startFallbackScheduler() {
-  // If Redis is connected the BullMQ worker handles scheduling.
-  if (redis) {
-    console.log("[Scheduler] Redis available — BullMQ worker handles scheduling. Run `npm run worker:dev` separately.");
-    return;
-  }
-
-  console.log("[Scheduler] Redis unavailable — starting in-process auto-refresh every 30 min.");
+  // Run the periodic poll IN-PROCESS. The separate BullMQ worker isn't deployed
+  // (single Render service), so deferring to it when Redis is present would mean
+  // nothing runs the schedule at all. Polling in-process keeps the every-30-min
+  // refresh working on a single instance, with or without Redis.
+  //
+  // NOTE: if a dedicated worker process is ever deployed, gate this off so the
+  // poll doesn't run in both places (which would double-ingest).
+  console.log(
+    redis
+      ? "[Scheduler] Running in-process auto-refresh every 30 min (no separate worker deployed)."
+      : "[Scheduler] Redis unavailable — running in-process auto-refresh every 30 min."
+  );
 
   // Initial poll 60s after startup (let the server warm up)
   setTimeout(() => runPoll(), 60_000);
