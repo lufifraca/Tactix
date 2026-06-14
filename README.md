@@ -46,7 +46,7 @@ A cross-game analytics and coaching platform that helps competitive gamers track
 | Frontend | Next.js 14, React 18, Tailwind CSS, Framer Motion |
 | Backend | Fastify, Prisma ORM, PostgreSQL |
 | Queue | BullMQ, Redis (Upstash) |
-| Storage | S3-compatible (MinIO local, Tigris production) |
+| Storage | S3-compatible (MinIO local, Cloudflare R2 production) |
 | Auth | Email/Password, Google & Discord OAuth, Steam OpenID |
 | Payments | Stripe Checkout + Customer Portal |
 | Monitoring | Sentry |
